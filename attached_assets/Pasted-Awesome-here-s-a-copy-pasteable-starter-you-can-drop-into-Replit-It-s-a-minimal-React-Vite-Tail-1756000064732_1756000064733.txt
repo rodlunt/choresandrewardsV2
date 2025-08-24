@@ -1,0 +1,938 @@
+Awesome—here’s a copy-pasteable starter you can drop into Replit. It’s a minimal React + Vite + Tailwind + shadcn-style UI app that:
+
+Runs 100% in the browser (IndexedDB via a tiny wrapper)
+
+Implements your exact flows (add child → select child → complete chores → payout → history)
+
+Uses a Brisbane-Kids–inspired palette (coral/teal/yellow/sky neutrals)
+
+Includes Duolingo-style feedback (toast + haptics + optional confetti + tiny sounds)
+
+Is Port-to-Play ready (PWA, assetlinks.json placeholder for TWA, clean dist/)
+
+Uses your domain: https://choresandrewards.app
+
+Paste each file into Replit matching the paths below. After pasting, run:
+
+“Install” to install dependencies
+
+npm run dev to start
+
+Optionally npm run build to produce /dist for Docker/TWA
+
+package.json
+{
+  "name": "chores-minimal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "1.1.1",
+    "@radix-ui/react-toast": "1.1.5",
+    "canvas-confetti": "1.9.3",
+    "clsx": "2.1.1",
+    "idb": "8.0.0",
+    "lucide-react": "0.468.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.26.2",
+    "sonner": "1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.5.4",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.45",
+    "tailwindcss": "3.4.10",
+    "typescript": "5.5.4",
+    "vite": "5.4.2"
+  }
+}
+
+vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// Ensures correct scope/start_url for PWA installs on your domain
+export default defineConfig({
+  plugins: [react()],
+  server: { port: 5173 },
+  build: { outDir: "dist" },
+  base: "/"
+});
+
+tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "public/manifest.webmanifest"]
+}
+
+tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+export default {
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          coral: "#F43F5E",     // primary
+          teal: "#14B8A6",      // secondary
+          yellow: "#FACC15",    // highlight
+          sky: "#3B82F6",       // info/links
+          grayDark: "#374151",  // text
+          grayLight: "#F9FAFB"  // bg
+        }
+      },
+      borderRadius: {
+        "2xl": "1rem",
+        "3xl": "1.25rem"
+      },
+      boxShadow: {
+        soft: "0 6px 20px rgba(0,0,0,0.06)"
+      }
+    }
+  },
+  plugins: []
+} satisfies Config;
+
+postcss.config.js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+
+public/index.html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#F43F5E" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <title>Chores (Minimal)</title>
+  </head>
+  <body class="bg-brand-grayLight">
+    <div id="root"></div>
+
+    <!-- SFX (user-toggleable) -->
+    <audio id="sfx-tick" preload="auto" src="/sfx/tick.mp3"></audio>
+    <audio id="sfx-coin" preload="auto" src="/sfx/coin.mp3"></audio>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+public/manifest.webmanifest
+{
+  "name": "Chores (Minimal)",
+  "short_name": "Chores",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#F43F5E",
+  "description": "Track kids' chores, complete tasks, payout totals, and keep a payout history — all offline.",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
+public/.well-known/assetlinks.json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.choresandrewards",
+      "sha256_cert_fingerprints": ["REPLACE_WITH_RELEASE_SIGNING_SHA256"]
+    }
+  }
+]
+
+
+Later, host this at https://choresandrewards.app/.well-known/assetlinks.json and replace the fingerprint.
+
+(Add two PNG icons in public/icons/—192 and 512. Any placeholder is fine for dev.)
+(Optional: put two tiny sfx files at public/sfx/tick.mp3 and public/sfx/coin.mp3.)
+
+src/app.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-once { animation: pulseOnce .25s ease-out; }
+  @keyframes pulseOnce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+  .slide-chip { animation: slideChip .35s ease-out; }
+  @keyframes slideChip {
+    0% { transform: translateY(6px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+}
+
+src/main.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import "./app.css";
+import { AppShell } from "./shell/AppShell";
+import { Home } from "./pages/Home";
+import { ChildChores } from "./pages/ChildChores";
+import { Totals } from "./pages/Totals";
+import { History } from "./pages/History";
+import { Settings } from "./pages/Settings";
+import { Toaster } from "sonner";
+import { initDB } from "./state/db";
+import { registerSW } from "./pwa/register-sw";
+
+initDB();
+registerSW();
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AppShell />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "child/:id", element: <ChildChores /> },
+      { path: "totals", element: <Totals /> },
+      { path: "history", element: <History /> },
+      { path: "settings", element: <Settings /> }
+    ]
+  }
+]);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
+    <Toaster position="top-right" richColors />
+  </React.StrictMode>
+);
+
+src/shell/AppShell.tsx
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { DollarSign, History, Settings as Cog, Users } from "lucide-react";
+
+export function AppShell() {
+  const loc = useLocation();
+  const Tab = ({ to, icon, label }: any) => (
+    <Link
+      to={to}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition
+        ${loc.pathname === to || (to === "/" && loc.pathname === "/")
+          ? "bg-white text-brand-coral shadow-soft"
+          : "text-brand-grayDark hover:bg-white/70"}`}
+    >
+      {icon} <span className="font-medium">{label}</span>
+    </Link>
+  );
+
+  return (
+    <div className="min-h-screen text-brand-grayDark">
+      <header className="bg-white sticky top-0 z-10 shadow-soft">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
+          <span className="text-2xl font-bold text-brand-coral">Chores</span>
+          <nav className="ml-auto flex gap-2">
+            <Tab to="/" icon={<Users size={18}/>} label="Home" />
+            <Tab to="/totals" icon={<DollarSign size={18}/>} label="Totals" />
+            <Tab to="/history" icon={<History size={18}/>} label="History" />
+            <Tab to="/settings" icon={<Cog size={18}/>} label="Settings" />
+          </nav>
+        </div>
+      </header>
+      <main className="max-w-3xl mx-auto px-6 py-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+src/lib/currency.ts
+export const formatAUD = (cents: number) =>
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" })
+    .format((cents || 0) / 100);
+
+src/lib/feedback.ts
+import { toast } from "sonner";
+
+export type FeedbackSettings = {
+  sounds: boolean;
+  haptics: boolean;
+  confetti: boolean;
+};
+
+export function useFeedback(settings: FeedbackSettings) {
+  const vibrate = (ms = 30) => settings.haptics && navigator.vibrate?.(ms);
+  const play = (key: "tick" | "coin") => {
+    if (!settings.sounds) return;
+    const el = document.getElementById(`sfx-${key}`) as HTMLAudioElement | null;
+    if (el) { el.currentTime = 0; el.play().catch(() => {}); }
+  };
+  const fireConfetti = async () => {
+    if (!settings.confetti) return;
+    const { default: confetti } = await import("canvas-confetti");
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+  };
+  const success = (title: string, description?: string) =>
+    toast.success(title, { description });
+  const info = (title: string, description?: string) =>
+    toast(title, { description });
+
+  return { vibrate, play, fireConfetti, success, info };
+}
+
+src/pwa/register-sw.ts
+export function registerSW() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch(() => {});
+    });
+  }
+}
+
+public/sw.js
+// Minimal app-shell cache for offline use
+const CACHE = "chores-v1";
+const ASSETS = ["/", "/index.html", "/manifest.webmanifest"];
+
+self.addEventListener("install", (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+});
+
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
+});
+
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  e.respondWith(
+    caches.match(req).then((cached) =>
+      cached ||
+      fetch(req).catch(() => {
+        // SPA navigation fallback
+        if (req.mode === "navigate") return caches.match("/index.html");
+      })
+    )
+  );
+});
+
+src/state/db.ts (IndexedDB wrapper + seed chores)
+import { openDB, IDBPDatabase } from "idb";
+
+type Child = { id: string; name: string; createdAt: string; };
+type Chore = { id: string; title: string; valueCents: number; createdAt: string; };
+type Completion = { id: string; childId: string; choreId: string; valueCents: number; doneAt: string; };
+type Payout = { id: string; childId: string; amountCents: number; paidAt: string; };
+type RunningTotal = { childId: string; amountCents: number; };
+type Settings = { id: "app"; sounds: boolean; haptics: boolean; confetti: boolean; };
+
+let db: IDBPDatabase<any>;
+
+export async function initDB() {
+  db = await openDB("chores_min_v1", 1, {
+    upgrade(d) {
+      d.createObjectStore("children", { keyPath: "id" });
+      d.createObjectStore("chores", { keyPath: "id" });
+      d.createObjectStore("completions", { keyPath: "id" });
+      d.createObjectStore("payouts", { keyPath: "id" });
+      d.createObjectStore("runningTotals", { keyPath: "childId" });
+      d.createObjectStore("settings", { keyPath: "id" });
+    }
+  });
+  // Seed default settings if missing
+  const s = await db.get("settings", "app");
+  if (!s) await db.put("settings", { id: "app", sounds: true, haptics: true, confetti: true } as Settings);
+  // Seed example chores if none exist
+  const cursor = await db.getAllKeys("chores");
+  if (cursor.length === 0) {
+    const now = new Date().toISOString();
+    const seed: Chore[] = [
+      { id: crypto.randomUUID(), title: "Dishes", valueCents: 200, createdAt: now },
+      { id: crypto.randomUUID(), title: "Vacuum", valueCents: 300, createdAt: now },
+      { id: crypto.randomUUID(), title: "Make bed", valueCents: 100, createdAt: now }
+    ];
+    for (const c of seed) await db.put("chores", c);
+  }
+}
+
+export const dbApi = {
+  // Settings
+  getSettings: () => db.get("settings", "app") as Promise<Settings>,
+  saveSettings: (s: Settings) => db.put("settings", s),
+
+  // Children
+  listChildren: () => db.getAll("children") as Promise<Child[]>,
+  addChild: async (name: string) => {
+    const child: Child = { id: crypto.randomUUID(), name: name.trim(), createdAt: new Date().toISOString() };
+    await db.put("children", child);
+    await db.put("runningTotals", { childId: child.id, amountCents: 0 } as RunningTotal);
+    return child;
+  },
+  renameChild: (id: string, name: string) => db.get("children", id).then(ch => ch && db.put("children", { ...ch, name })),
+  deleteChild: async (id: string) => {
+    await db.delete("children", id);
+    await db.delete("runningTotals", id);
+    const completions = await db.getAll("completions");
+    for (const c of completions.filter((x: Completion) => x.childId === id)) await db.delete("completions", c.id);
+    const payouts = await db.getAll("payouts");
+    for (const p of payouts.filter((x: Payout) => x.childId === id)) await db.delete("payouts", p.id);
+  },
+
+  // Chores
+  listChores: () => db.getAll("chores") as Promise<Chore[]>,
+  addChore: async (title: string, valueCents: number) => {
+    const chore: Chore = { id: crypto.randomUUID(), title: title.trim(), valueCents, createdAt: new Date().toISOString() };
+    await db.put("chores", chore);
+    return chore;
+  },
+  updateChore: async (id: string, title: string, valueCents: number) => {
+    const c = await db.get("chores", id);
+    if (c) await db.put("chores", { ...c, title: title.trim(), valueCents });
+  },
+  deleteChore: (id: string) => db.delete("chores", id),
+
+  // Complete chore
+  completeChore: async (childId: string, chore: Chore) => {
+    const completion: Completion = {
+      id: crypto.randomUUID(),
+      childId, choreId: chore.id, valueCents: chore.valueCents, doneAt: new Date().toISOString()
+    };
+    await db.put("completions", completion);
+    const rt = (await db.get("runningTotals", childId)) as RunningTotal | undefined;
+    const amount = (rt?.amountCents ?? 0) + chore.valueCents;
+    await db.put("runningTotals", { childId, amountCents: amount });
+    return amount;
+  },
+
+  // Running totals
+  getRunningTotals: async () => {
+    const rts = await db.getAll("runningTotals") as RunningTotal[];
+    return rts.reduce<Record<string, number>>((acc, r) => (acc[r.childId] = r.amountCents, acc), {});
+  },
+  getRunningTotal: (childId: string) => db.get("runningTotals", childId).then((r: RunningTotal) => r?.amountCents ?? 0),
+
+  // Payouts
+  payoutChild: async (childId: string) => {
+    const amount = await dbApi.getRunningTotal(childId);
+    const payout: Payout = { id: crypto.randomUUID(), childId, amountCents: amount, paidAt: new Date().toISOString() };
+    await db.put("payouts", payout);
+    await db.put("runningTotals", { childId, amountCents: 0 });
+    return payout;
+    },
+  listPayouts: () => db.getAll("payouts") as Promise<Payout[]>,
+
+  // Export / Import
+  exportAll: async () => {
+    const dump = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      children: await db.getAll("children"),
+      chores: await db.getAll("chores"),
+      completions: await db.getAll("completions"),
+      payouts: await db.getAll("payouts"),
+      runningTotals: await db.getAll("runningTotals")
+    };
+    return dump;
+  },
+  importReplaceAll: async (data: any) => {
+    const tx = db.transaction(["children","chores","completions","payouts","runningTotals"], "readwrite");
+    await Promise.all([
+      tx.objectStore("children").clear(),
+      tx.objectStore("chores").clear(),
+      tx.objectStore("completions").clear(),
+      tx.objectStore("payouts").clear(),
+      tx.objectStore("runningTotals").clear()
+    ]);
+    for (const k of ["children","chores","completions","payouts","runningTotals"] as const) {
+      for (const item of (data[k] ?? [])) await tx.objectStore(k).put(item);
+    }
+    await tx.done;
+  }
+};
+
+src/pages/Home.tsx
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { dbApi } from "../state/db";
+import { formatAUD } from "../lib/currency";
+import { toast } from "sonner";
+
+type Child = { id: string; name: string; createdAt: string; };
+
+export function Home() {
+  const nav = useNavigate();
+  const [children, setChildren] = useState<Child[]>([]);
+  const [totals, setTotals] = useState<Record<string, number>>({});
+  const [name, setName] = useState("");
+
+  async function refresh() {
+    const kids = await dbApi.listChildren();
+    const rts = await dbApi.getRunningTotals();
+    setChildren(kids);
+    setTotals(rts);
+  }
+
+  useEffect(() => { refresh(); }, []);
+
+  async function addChildFirstRun() {
+    if (!name.trim()) return toast.error("Please enter a child name");
+    const child = await dbApi.addChild(name);
+    setName("");
+    toast.success(`Welcome, ${child.name}!`);
+    nav(`/child/${child.id}`, { replace: true });
+  }
+
+  if (children.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl shadow-soft p-6">
+        <h1 className="text-2xl font-bold mb-4 text-brand-coral">Add Child</h1>
+        <div className="flex gap-3">
+          <input
+            className="border rounded-xl px-3 py-2 w-full"
+            placeholder="Child name"
+            value={name}
+            onChange={(e)=>setName(e.target.value)}
+          />
+          <button
+            onClick={addChildFirstRun}
+            className="bg-brand-coral text-white px-4 py-2 rounded-xl hover:bg-brand-coral/90"
+          >Save</button>
+        </div>
+        <p className="text-sm text-brand-grayDark/70 mt-3">
+          After saving, you can add more children or start adding chores.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Children</h1>
+        <div className="flex gap-2">
+          <Link to="/totals" className="px-3 py-2 rounded-xl bg-white shadow-soft">View Totals</Link>
+          <Link to="/settings" className="px-3 py-2 rounded-xl bg-white shadow-soft">Settings</Link>
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        {children.map((c) => (
+          <Link key={c.id} to={`/child/${c.id}`}
+            className="bg-white rounded-3xl shadow-soft p-5 flex items-center justify-between hover:shadow-lg transition">
+            <div>
+              <div className="text-lg font-semibold">{c.name}</div>
+              <div className="text-sm text-brand-grayDark/70">Tap to complete chores</div>
+            </div>
+            <div className="text-xl font-bold text-brand-teal">
+              {formatAUD(totals[c.id] ?? 0)}
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-soft p-5">
+        <h2 className="font-semibold mb-3">Add another child</h2>
+        <div className="flex gap-3">
+          <input
+            className="border rounded-xl px-3 py-2 w-full"
+            placeholder="Child name"
+            value={name}
+            onChange={(e)=>setName(e.target.value)}
+          />
+          <button
+            onClick={async ()=>{
+              if (!name.trim()) return toast.error("Please enter a child name");
+              await dbApi.addChild(name);
+              setName("");
+              toast.success("Child added");
+              refresh();
+            }}
+            className="bg-brand-teal text-white px-4 py-2 rounded-xl hover:bg-brand-teal/90"
+          >Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+src/pages/ChildChores.tsx
+import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { dbApi } from "../state/db";
+import { formatAUD } from "../lib/currency";
+import { useFeedback } from "../lib/feedback";
+import { toast } from "sonner";
+
+type Child = { id: string; name: string; };
+type Chore = { id: string; title: string; valueCents: number; };
+
+export function ChildChores() {
+  const { id } = useParams();
+  const [child, setChild] = useState<Child | null>(null);
+  const [chores, setChores] = useState<Chore[]>([]);
+  const [total, setTotal] = useState(0);
+  const [settings, setSettings] = useState({ sounds: true, haptics: true, confetti: true });
+  const fb = useFeedback(settings);
+
+  const title = useMemo(()=> child ? `Chores for ${child.name}` : "Chores", [child]);
+
+  async function refresh() {
+    const kids = await dbApi.listChildren();
+    const me = kids.find(k => k.id === id) ?? null;
+    setChild(me);
+    setChores(await dbApi.listChores());
+    setTotal(await dbApi.getRunningTotal(id!));
+    setSettings(await dbApi.getSettings());
+  }
+  useEffect(()=>{ refresh(); }, [id]);
+
+  async function onComplete(chore: Chore, el: HTMLDivElement | null) {
+    if (!id) return;
+    const newTotal = await dbApi.completeChore(id, chore);
+    setTotal(newTotal);
+    fb.vibrate(30); fb.play("tick");
+    if (el) { el.classList.add("pulse-once"); setTimeout(()=>el.classList.remove("pulse-once"), 260); }
+    toast.success(`+${formatAUD(chore.valueCents)} for ${child?.name}`, { description: chore.title });
+  }
+
+  async function onPayout() {
+    if (!id) return;
+    if (total <= 0) return toast.info("Nothing to pay right now");
+    const ok = confirm(`Payout ${formatAUD(total)} to ${child?.name}?`);
+    if (!ok) return;
+    const payout = await dbApi.payoutChild(id);
+    setTotal(0);
+    fb.vibrate(60); fb.play("coin"); fb.fireConfetti();
+    toast.success(`Paid ${formatAUD(payout.amountCents)} to ${child?.name}`, { description: "Nice work! 🎉" });
+  }
+
+  if (!child) return <div className="text-sm">Child not found. <Link to="/" className="text-brand-sky underline">Back Home</Link></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <div className="flex items-center gap-3">
+          <div className="bg-brand-yellow/40 text-brand-grayDark px-3 py-1 rounded-xl font-semibold slide-chip">
+            Total: {formatAUD(total)}
+          </div>
+          <button
+            onClick={onPayout}
+            className="bg-brand-coral text-white px-4 py-2 rounded-xl hover:bg-brand-coral/90"
+          >Payout</button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-soft divide-y">
+        {chores.map((ch) => (
+          <div key={ch.id} className="p-4 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="font-medium">{ch.title}</span>
+              <span className="text-sm text-brand-grayDark/70">{formatAUD(ch.valueCents)}</span>
+            </div>
+            <div
+              ref={(el)=>{}}
+              onClick={(e)=>onComplete(ch, (e.currentTarget as HTMLDivElement))}
+              className="select-none bg-brand-teal text-white px-4 py-2 rounded-xl hover:bg-brand-teal/90 cursor-pointer"
+            >
+              Complete
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <Link to="/" className="text-brand-sky underline">Back to children</Link>
+      </div>
+    </div>
+  );
+}
+
+src/pages/Totals.tsx
+import { useEffect, useState } from "react";
+import { dbApi } from "../state/db";
+import { formatAUD } from "../lib/currency";
+import { toast } from "sonner";
+
+type Child = { id: string; name: string; };
+
+export function Totals() {
+  const [children, setChildren] = useState<Child[]>([]);
+  const [totals, setTotals] = useState<Record<string, number>>({});
+  const [grand, setGrand] = useState(0);
+
+  async function refresh() {
+    const kids = await dbApi.listChildren();
+    const rts = await dbApi.getRunningTotals();
+    setChildren(kids);
+    setTotals(rts);
+    setGrand(Object.values(rts).reduce((a,b)=>a+(b||0),0));
+  }
+
+  useEffect(()=>{ refresh(); }, []);
+
+  async function payout(id: string, name: string) {
+    const amount = totals[id] ?? 0;
+    if (amount<=0) return toast.info("Nothing to pay");
+    const ok = confirm(`Payout ${formatAUD(amount)} to ${name}?`);
+    if (!ok) return;
+    await dbApi.payoutChild(id);
+    toast.success(`Paid ${formatAUD(amount)} to ${name}`);
+    refresh();
+  }
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Totals</h1>
+      <div className="bg-white rounded-3xl shadow-soft divide-y">
+        {children.map((c)=>(
+          <div key={c.id} className="p-4 flex items-center justify-between">
+            <div className="font-medium">{c.name}</div>
+            <div className="flex items-center gap-3">
+              <div className="font-bold text-brand-teal">{formatAUD(totals[c.id] ?? 0)}</div>
+              <button
+                onClick={()=>payout(c.id, c.name)}
+                className="bg-brand-coral text-white px-3 py-2 rounded-xl hover:bg-brand-coral/90"
+              >Payout</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-right font-semibold">Grand Total: {formatAUD(grand)}</div>
+    </div>
+  );
+}
+
+src/pages/History.tsx
+import { useEffect, useState } from "react";
+import { dbApi } from "../state/db";
+import { formatAUD } from "../lib/currency";
+
+type Payout = { id: string; childId: string; amountCents: number; paidAt: string; };
+type Child = { id: string; name: string; };
+
+export function History() {
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [children, setChildren] = useState<Record<string, Child>>({});
+
+  async function refresh() {
+    const ps = await dbApi.listPayouts();
+    ps.sort((a,b)=> b.paidAt.localeCompare(a.paidAt));
+    setPayouts(ps);
+    const kids = await dbApi.listChildren();
+    setChildren(kids.reduce<Record<string, Child>>((acc, k)=> (acc[k.id]=k, acc), {}));
+  }
+  useEffect(()=>{ refresh(); }, []);
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">History</h1>
+      <div className="bg-white rounded-3xl shadow-soft divide-y">
+        {payouts.length === 0 && <div className="p-4 text-sm text-brand-grayDark/70">No payouts yet.</div>}
+        {payouts.map((p)=>(
+          <div key={p.id} className="p-4 flex items-center justify-between">
+            <div>
+              <div className="font-medium">{children[p.childId]?.name ?? "Unknown"}</div>
+              <div className="text-sm text-brand-grayDark/70">{new Date(p.paidAt).toLocaleString()}</div>
+            </div>
+            <div className="font-bold">{formatAUD(p.amountCents)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+src/pages/Settings.tsx
+import { useEffect, useState } from "react";
+import { dbApi } from "../state/db";
+import { toast } from "sonner";
+
+type Child = { id: string; name: string; };
+type Chore = { id: string; title: string; valueCents: number; };
+type SettingsT = { id: "app"; sounds: boolean; haptics: boolean; confetti: boolean; };
+
+export function Settings() {
+  const [children, setChildren] = useState<Child[]>([]);
+  const [chores, setChores] = useState<Chore[]>([]);
+  const [cName, setCName] = useState("");
+  const [chTitle, setChTitle] = useState("");
+  const [chValue, setChValue] = useState<number>(100);
+  const [settings, setSettings] = useState<SettingsT | null>(null);
+
+  async function refresh() {
+    setChildren(await dbApi.listChildren());
+    setChores(await dbApi.listChores());
+    setSettings(await dbApi.getSettings());
+  }
+  useEffect(()=>{ refresh(); }, []);
+
+  async function exportData() {
+    const data = await dbApi.exportAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `chores-backup-${Date.now()}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("Backup saved");
+  }
+
+  async function importData(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const ok = confirm("Replace all current data with this backup?");
+    if (!ok) return;
+    await dbApi.importReplaceAll(data);
+    toast.success("Data restored");
+    refresh();
+  }
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">Settings</h1>
+
+      <section className="bg-white rounded-3xl shadow-soft p-5">
+        <h2 className="font-semibold mb-3">Children</h2>
+        <div className="flex gap-3 mb-3">
+          <input className="border rounded-xl px-3 py-2 w-full" placeholder="Name"
+                 value={cName} onChange={e=>setCName(e.target.value)} />
+          <button
+            className="bg-brand-teal text-white px-4 py-2 rounded-xl hover:bg-brand-teal/90"
+            onClick={async ()=>{
+              if (!cName.trim()) return toast.error("Enter a name");
+              await dbApi.addChild(cName); setCName(""); toast.success("Child added"); refresh();
+            }}
+          >Add</button>
+        </div>
+        <ul className="divide-y">
+          {children.map((c)=>(
+            <li key={c.id} className="py-2 flex items-center justify-between">
+              <span>{c.name}</span>
+              <button className="text-red-600 hover:underline" onClick={async()=>{ await dbApi.deleteChild(c.id); toast("Deleted"); refresh(); }}>
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="bg-white rounded-3xl shadow-soft p-5">
+        <h2 className="font-semibold mb-3">Chores</h2>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <input className="border rounded-xl px-3 py-2 col-span-2" placeholder="Chore title"
+                 value={chTitle} onChange={e=>setChTitle(e.target.value)} />
+          <input className="border rounded-xl px-3 py-2" type="number" min={1} step={1}
+                 value={chValue} onChange={e=>setChValue(parseInt(e.target.value||"0",10))} />
+        </div>
+        <div className="flex gap-3 mb-4">
+          <button
+            className="bg-brand-teal text-white px-4 py-2 rounded-xl hover:bg-brand-teal/90"
+            onClick={async ()=>{
+              if (!chTitle.trim() || chValue<=0) return toast.error("Title and positive value required (cents)");
+              await dbApi.addChore(chTitle, chValue); setChTitle(""); setChValue(100); toast.success("Chore added"); refresh();
+            }}
+          >Add chore</button>
+          <span className="text-sm text-brand-grayDark/70">Value in cents (e.g., 200 = $2.00)</span>
+        </div>
+        <ul className="divide-y">
+          {chores.map((c)=>(
+            <li key={c.id} className="py-2 flex items-center justify-between">
+              <span>{c.title} — <span className="text-brand-teal">{(c.valueCents/100).toFixed(2)}</span></span>
+              <button className="text-red-600 hover:underline" onClick={async()=>{ await dbApi.deleteChore(c.id); toast("Deleted"); refresh(); }}>
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="bg-white rounded-3xl shadow-soft p-5">
+        <h2 className="font-semibold mb-3">Feedback & Effects</h2>
+        {settings && (
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={settings.sounds} onChange={async (e)=>{ const s = { ...settings, sounds: e.target.checked }; setSettings(s); await dbApi.saveSettings(s as any); }} />
+              Sounds
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={settings.haptics} onChange={async (e)=>{ const s = { ...settings, haptics: e.target.checked }; setSettings(s); await dbApi.saveSettings(s as any); }} />
+              Haptics
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={settings.confetti} onChange={async (e)=>{ const s = { ...settings, confetti: e.target.checked }; setSettings(s); await dbApi.saveSettings(s as any); }} />
+              Confetti
+            </label>
+          </div>
+        )}
+      </section>
+
+      <section className="bg-white rounded-3xl shadow-soft p-5">
+        <h2 className="font-semibold mb-3">Backup</h2>
+        <div className="flex gap-3">
+          <button onClick={exportData} className="bg-brand-coral text-white px-4 py-2 rounded-xl hover:bg-brand-coral/90">Export JSON</button>
+          <label className="px-4 py-2 rounded-xl bg-white border cursor-pointer hover:bg-white/80">
+            Import JSON
+            <input type="file" accept="application/json" className="hidden" onChange={importData} />
+          </label>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+Dockerfile (optional static hosting)
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist/ /usr/share/nginx/html/
+RUN sed -i 's/try_files.*/try_files $uri $uri\/ \/index.html;/' /etc/nginx/conf.d/default.conf
+EXPOSE 80
