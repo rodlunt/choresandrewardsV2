@@ -42,8 +42,9 @@ export class AppStorage {
     await db.delete('children', id);
     
     // Also delete all payouts for this child
-    const payouts = await db.getAllFromIndex('payouts', 'childId', id);
-    for (const payout of payouts) {
+    const allPayouts = await db.getAll('payouts');
+    const childPayouts = allPayouts.filter(p => p.childId === id);
+    for (const payout of childPayouts) {
       await db.delete('payouts', payout.id);
     }
   }
@@ -95,7 +96,8 @@ export class AppStorage {
 
   async getPayoutsForChild(childId: string): Promise<Payout[]> {
     const db = await getDB();
-    return db.getAllFromIndex('payouts', 'childId', childId);
+    const allPayouts = await db.getAll('payouts');
+    return allPayouts.filter(p => p.childId === childId);
   }
 
   async createPayout(data: InsertPayout): Promise<Payout> {
@@ -118,7 +120,7 @@ export class AppStorage {
 
   async updateSettings(settings: Settings): Promise<Settings> {
     const db = await getDB();
-    await db.put('settings', { ...settings });
+    await db.put('settings', { ...settings }, 'app-settings');
     return settings;
   }
 
