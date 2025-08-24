@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useDeleteChore } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
-import { ArrowLeft, Check, DollarSign } from 'lucide-react';
+import AddChoreDialog from '@/components/AddChoreDialog';
+import { ArrowLeft, Check, DollarSign, Edit, Trash2, Plus } from 'lucide-react';
+import { Chore } from '@shared/schema';
 
 interface ChildChoresPageProps {
   childId: string;
@@ -16,10 +18,13 @@ interface ChildChoresPageProps {
 export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const [, setLocation] = useLocation();
   const [showPayoutDialog, setShowPayoutDialog] = useState(false);
+  const [showAddChore, setShowAddChore] = useState(false);
+  const [editingChore, setEditingChore] = useState<Chore | undefined>(undefined);
   
   const { data: child, isLoading: childLoading } = useChild(childId);
   const { data: chores, isLoading: choresLoading } = useChores();
   const completeChore = useCompleteChore();
+  const deleteChore = useDeleteChore();
   const { choreFeedback } = useFeedback();
   const { toast } = useToast();
 
@@ -51,6 +56,36 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditChore = (chore: Chore) => {
+    setEditingChore(chore);
+    setShowAddChore(true);
+  };
+
+  const handleDeleteChore = async (choreId: string, choreTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${choreTitle}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteChore.mutateAsync(choreId);
+      toast({
+        title: "Success",
+        description: `"${choreTitle}" has been deleted`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete chore",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddChore = () => {
+    setEditingChore(undefined);
+    setShowAddChore(true);
   };
 
   if (isLoading) {
@@ -98,12 +133,24 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         </div>
       </div>
 
+      {/* Add New Chore Button */}
+      <div className="mb-4">
+        <Button
+          onClick={handleAddChore}
+          className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-grayDark w-full py-4 shadow-soft"
+          data-testid="button-add-chore"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Add New Chore
+        </Button>
+      </div>
+
       {/* Chores List */}
       <div className="space-y-3">
         {chores?.map((chore) => (
           <Card key={chore.id} className="shadow-soft" data-testid={`card-chore-${chore.id}`}>
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
                     {chore.title}
@@ -112,15 +159,35 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                     {formatCurrency(chore.valueCents)}
                   </p>
                 </div>
-                <Button
-                  onClick={() => handleCompleteChore(chore.id, chore.title, chore.valueCents)}
-                  disabled={completeChore.isPending}
-                  className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft px-6 py-3"
-                  data-testid={`button-complete-chore-${chore.id}`}
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Complete
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleEditChore(chore)}
+                    variant="outline"
+                    size="sm"
+                    className="p-2 hover:bg-brand-grayLight"
+                    data-testid={`button-edit-chore-${chore.id}`}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteChore(chore.id, chore.title)}
+                    variant="outline"
+                    size="sm"
+                    className="p-2 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                    data-testid={`button-delete-chore-${chore.id}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleCompleteChore(chore.id, chore.title, chore.valueCents)}
+                    disabled={completeChore.isPending}
+                    className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft px-4 py-2"
+                    data-testid={`button-complete-chore-${chore.id}`}
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Complete
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -132,17 +199,10 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         <Card className="shadow-soft">
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 bg-brand-grayLight rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-brand-grayDark/40" />
+              <Plus className="w-8 h-8 text-brand-grayDark/40" />
             </div>
             <h3 className="text-lg font-semibold text-brand-grayDark mb-2">No Chores Available</h3>
-            <p className="text-brand-grayDark/60 mb-4">Add some chores in Settings to get started!</p>
-            <Button 
-              onClick={() => setLocation('/settings')}
-              className="bg-brand-teal hover:bg-brand-teal/90"
-              data-testid="button-go-to-settings"
-            >
-              Go to Settings
-            </Button>
+            <p className="text-brand-grayDark/60 mb-4">Tap the "Add New Chore" button above to create your first chore!</p>
           </CardContent>
         </Card>
       )}
@@ -178,6 +238,12 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         open={showPayoutDialog} 
         onOpenChange={setShowPayoutDialog}
         child={child}
+      />
+
+      <AddChoreDialog 
+        open={showAddChore} 
+        onOpenChange={setShowAddChore}
+        existingChore={editingChore}
       />
     </div>
   );
