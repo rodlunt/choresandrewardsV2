@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brisbane Kids Color Palette */
+  --brand-coral: hsl(348, 85%, 61%);
+  --brand-teal: hsl(173, 80%, 40%);
+  --brand-yellow: hsl(51, 95%, 53%);
+  --brand-sky: hsl(217, 91%, 60%);
+  --brand-grayDark: hsl(209, 20%, 25%);
+  --brand-grayLight: hsl(220, 14%, 98%);
+
+  /* Shadcn color system */
+  --background: hsl(220, 14%, 98%);
+  --foreground: hsl(209, 20%, 25%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(209, 20%, 25%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(209, 20%, 25%);
+  --primary: hsl(348, 85%, 61%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(220, 14%, 96%);
+  --secondary-foreground: hsl(209, 20%, 25%);
+  --muted: hsl(220, 14%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --accent: hsl(220, 14%, 96%);
+  --accent-foreground: hsl(209, 20%, 25%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --ring: hsl(348, 85%, 61%);
+  --chart-1: hsl(173, 80%, 40%);
+  --chart-2: hsl(51, 95%, 53%);
+  --chart-3: hsl(217, 91%, 60%);
+  --chart-4: hsl(348, 85%, 61%);
+  --chart-5: hsl(270, 95%, 75%);
+  --radius: 1rem;
+}
+
+.dark {
+  --background: hsl(209, 20%, 25%);
+  --foreground: hsl(220, 14%, 98%);
+  --card: hsl(209, 20%, 20%);
+  --card-foreground: hsl(220, 14%, 98%);
+  --popover: hsl(209, 20%, 20%);
+  --popover-foreground: hsl(220, 14%, 98%);
+  --primary: hsl(348, 85%, 61%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(209, 20%, 18%);
+  --secondary-foreground: hsl(220, 14%, 98%);
+  --muted: hsl(209, 20%, 18%);
+  --muted-foreground: hsl(215, 16%, 65%);
+  --accent: hsl(209, 20%, 18%);
+  --accent-foreground: hsl(220, 14%, 98%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --border: hsl(209, 20%, 18%);
+  --input: hsl(209, 20%, 18%);
+  --ring: hsl(348, 85%, 61%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .shadow-soft {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  }
+  
+  .text-brand-coral {
+    color: var(--brand-coral);
+  }
+  
+  .text-brand-teal {
+    color: var(--brand-teal);
+  }
+  
+  .text-brand-yellow {
+    color: var(--brand-yellow);
+  }
+  
+  .text-brand-sky {
+    color: var(--brand-sky);
+  }
+  
+  .text-brand-grayDark {
+    color: var(--brand-grayDark);
+  }
+  
+  .text-brand-grayLight {
+    color: var(--brand-grayLight);
+  }
+  
+  .bg-brand-coral {
+    background-color: var(--brand-coral);
+  }
+  
+  .bg-brand-teal {
+    background-color: var(--brand-teal);
+  }
+  
+  .bg-brand-yellow {
+    background-color: var(--brand-yellow);
+  }
+  
+  .bg-brand-sky {
+    background-color: var(--brand-sky);
+  }
+  
+  .bg-brand-grayDark {
+    background-color: var(--brand-grayDark);
+  }
+  
+  .bg-brand-grayLight {
+    background-color: var(--brand-grayLight);
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .pulse-once {
+      animation: pulseOnce 0.25s ease-out;
+    }
+    
+    @keyframes pulseOnce {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    
+    .slide-up {
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .bounce-gentle {
+      animation: bounceGentle 0.5s ease-out;
+    }
+    
+    @keyframes bounceGentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+  }
+}
