@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useChildren, useChores, usePayouts } from '@/hooks/use-app-data';
+import { useChildren, useChores, usePayouts, useSettings } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
+import { formatValue } from '@/lib/format';
 import { Link } from 'wouter';
 import { Plus, Users, DollarSign, TrendingUp } from 'lucide-react';
 
@@ -12,11 +13,12 @@ export default function HomePage() {
   const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: payouts, isLoading: payoutsLoading } = usePayouts();
+  const { data: settings } = useSettings();
 
   const isLoading = childrenLoading || choresLoading || payoutsLoading;
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const formatValueDisplay = (cents: number) => {
+    return formatValue(cents, settings?.displayMode);
   };
 
   const getChildInitials = (name: string) => {
@@ -86,7 +88,7 @@ export default function HomePage() {
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-2xl font-bold text-brand-coral" data-testid={`text-child-total-${child.id}`}>
-                          {formatCurrency(child.totalCents)}
+                          {formatValueDisplay(child.totalCents)}
                         </span>
                         <span className="text-sm text-brand-grayDark/60">earned</span>
                       </div>
@@ -138,7 +140,7 @@ export default function HomePage() {
                 <DollarSign className="w-6 h-6 text-brand-coral" />
               </div>
               <div className="text-2xl font-bold text-brand-coral" data-testid="text-total-earned">
-                {formatCurrency(totalEarned)}
+                {formatValueDisplay(totalEarned)}
               </div>
               <div className="text-sm text-brand-grayDark/60">Total Earned</div>
             </div>

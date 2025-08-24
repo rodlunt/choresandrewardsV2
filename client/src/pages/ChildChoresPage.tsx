@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
 import AddChoreDialog from '@/components/AddChoreDialog';
+import { formatValue } from '@/lib/format';
 import { ArrowLeft, Check, DollarSign, Edit, Trash2, Plus } from 'lucide-react';
 import { Chore } from '@shared/schema';
 
@@ -23,6 +24,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   
   const { data: child, isLoading: childLoading } = useChild(childId);
   const { data: chores, isLoading: choresLoading } = useChores();
+  const { data: settings } = useSettings();
   const completeChore = useCompleteChore();
   const deleteChore = useDeleteChore();
   const { choreFeedback } = useFeedback();
@@ -30,8 +32,8 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
 
   const isLoading = childLoading || choresLoading;
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const formatValueDisplay = (cents: number) => {
+    return formatValue(cents, settings?.displayMode);
   };
 
   const getChildInitials = (name: string) => {
@@ -47,7 +49,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
       
       toast({
         title: "🎉 Great job!",
-        description: `${choreTitle} completed! +${formatCurrency(choreValueCents)}`,
+        description: `${choreTitle} completed! +${formatValueDisplay(choreValueCents)}`,
       });
     } catch (error) {
       toast({
@@ -127,7 +129,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
               {child.name}'s Chores
             </h1>
             <p className="text-brand-grayDark/70" data-testid="text-child-total">
-              {formatCurrency(child.totalCents)} earned
+              {formatValueDisplay(child.totalCents)} earned
             </p>
           </div>
         </div>
@@ -156,7 +158,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                     {chore.title}
                   </h3>
                   <p className="text-brand-coral font-semibold" data-testid={`text-chore-value-${chore.id}`}>
-                    {formatCurrency(chore.valueCents)}
+                    {formatValueDisplay(chore.valueCents)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -218,7 +220,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold" data-testid="text-payout-amount">
-                  {formatCurrency(child.totalCents)}
+                  {formatValueDisplay(child.totalCents)}
                 </div>
                 <Button
                   onClick={() => setShowPayoutDialog(true)}

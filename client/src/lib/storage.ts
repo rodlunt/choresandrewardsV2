@@ -115,7 +115,7 @@ export class AppStorage {
   async getSettings(): Promise<Settings> {
     const db = await getDB();
     const settings = await db.get('settings', 'app-settings');
-    return settings || { sounds: true, haptics: true, confetti: true };
+    return settings || { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
   }
 
   async updateSettings(settings: Settings): Promise<Settings> {

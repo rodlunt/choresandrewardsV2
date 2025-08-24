@@ -1,14 +1,16 @@
-import { usePayouts } from '@/hooks/use-app-data';
+import { usePayouts, useSettings } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { formatValue } from '@/lib/format';
 import { CheckCircle, History } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HistoryPage() {
   const { data: payouts, isLoading } = usePayouts();
+  const { data: settings } = useSettings();
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const formatValueDisplay = (cents: number) => {
+    return formatValue(cents, settings?.displayMode);
   };
 
   const getChildInitials = (name: string) => {
@@ -75,7 +77,7 @@ export default function HistoryPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-brand-coral" data-testid={`text-payout-amount-${payout.id}`}>
-                    {formatCurrency(payout.amountCents)}
+                    {formatValueDisplay(payout.amountCents)}
                   </div>
                   <div className="flex items-center gap-1 text-brand-teal text-sm">
                     <CheckCircle className="w-4 h-4" />

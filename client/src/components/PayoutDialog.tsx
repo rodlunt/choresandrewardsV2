@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { usePayoutChild } from '@/hooks/use-app-data';
+import { usePayoutChild, useSettings } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { useToast } from '@/hooks/use-toast';
 import { Child } from '@shared/schema';
+import { formatValue } from '@/lib/format';
 import { DollarSign } from 'lucide-react';
 
 interface PayoutDialogProps {
@@ -16,9 +17,10 @@ export default function PayoutDialog({ open, onOpenChange, child }: PayoutDialog
   const payoutChild = usePayoutChild();
   const { payoutFeedback } = useFeedback();
   const { toast } = useToast();
+  const { data: settings } = useSettings();
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const formatValueDisplay = (cents: number) => {
+    return formatValue(cents, settings?.displayMode);
   };
 
   const handlePayout = async () => {
@@ -30,7 +32,7 @@ export default function PayoutDialog({ open, onOpenChange, child }: PayoutDialog
       
       toast({
         title: "🎉 Payout Complete!",
-        description: `${child.name} has been paid ${formatCurrency(child.totalCents)}`,
+        description: `${child.name} has been paid ${formatValueDisplay(child.totalCents)}`,
       });
       
       onOpenChange(false);
@@ -54,10 +56,10 @@ export default function PayoutDialog({ open, onOpenChange, child }: PayoutDialog
               <DollarSign className="text-white text-xl" />
             </div>
             <DialogTitle className="text-xl font-semibold text-brand-grayDark">
-              Pay Out {formatCurrency(child.totalCents)}?
+              Pay Out {formatValueDisplay(child.totalCents)}?
             </DialogTitle>
             <p className="text-brand-grayDark/70 mt-2">
-              This will reset {child.name}'s total to $0.00 and add the payout to history.
+              This will reset {child.name}'s total to zero and add the payout to history.
             </p>
           </div>
         </DialogHeader>

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCreateChore, useUpdateChore } from '@/hooks/use-app-data';
+import { useCreateChore, useUpdateChore, useSettings } from '@/hooks/use-app-data';
 import { useToast } from '@/hooks/use-toast';
 import { Chore } from '@shared/schema';
 
@@ -14,14 +14,29 @@ interface AddChoreDialogProps {
 }
 
 export default function AddChoreDialog({ open, onOpenChange, existingChore }: AddChoreDialogProps) {
-  const [title, setTitle] = useState(existingChore?.title || '');
-  const [value, setValue] = useState(existingChore ? (existingChore.valueCents / 100).toFixed(2) : '');
+  const [title, setTitle] = useState('');
+  const [value, setValue] = useState('');
   
   const createChore = useCreateChore();
   const updateChore = useUpdateChore();
+  const { data: settings } = useSettings();
   const { toast } = useToast();
 
   const isEditing = !!existingChore;
+  const displayMode = settings?.displayMode || 'dollars';
+
+  // Update form when existingChore changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (existingChore) {
+        setTitle(existingChore.title);
+        setValue(displayMode === 'dollars' ? (existingChore.valueCents / 100).toFixed(2) : existingChore.valueCents.toString());
+      } else {
+        setTitle('');
+        setValue('');
+      }
+    }
+  }, [open, existingChore, displayMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,15 +50,17 @@ export default function AddChoreDialog({ open, onOpenChange, existingChore }: Ad
       return;
     }
 
-    const valueCents = Math.round(parseFloat(value) * 100);
-    if (isNaN(valueCents) || valueCents < 1) {
+    const parsedValue = parseFloat(value);
+    if (isNaN(parsedValue) || parsedValue < (displayMode === 'dollars' ? 0.01 : 1)) {
       toast({
         title: "Error",
-        description: "Please enter a valid amount (minimum $0.01)",
+        description: `Please enter a valid amount (minimum ${displayMode === 'dollars' ? '$0.01' : '1 point'})`,
         variant: "destructive",
       });
       return;
     }
+
+    const valueCents = displayMode === 'dollars' ? Math.round(parsedValue * 100) : Math.round(parsedValue);
 
     try {
       if (isEditing) {
@@ -100,14 +117,14 @@ export default function AddChoreDialog({ open, onOpenChange, existingChore }: Ad
           </div>
           <div>
             <Label htmlFor="chore-value" className="block text-sm font-medium text-brand-grayDark mb-2">
-              Value (AUD)
+              Value ({displayMode === 'dollars' ? 'AUD' : 'Points'})
             </Label>
             <Input
               id="chore-value"
               type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="e.g., 2.50"
+              step={displayMode === 'dollars' ? "0.01" : "1"}
+              min={displayMode === 'dollars' ? "0.01" : "1"}
+              placeholder={displayMode === 'dollars' ? "e.g., 2.50" : "e.g., 50"}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className="w-full"

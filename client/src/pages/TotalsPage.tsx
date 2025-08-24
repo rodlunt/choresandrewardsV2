@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useChildren, usePayouts } from '@/hooks/use-app-data';
+import { useChildren, usePayouts, useSettings } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
 import { Child } from '@shared/schema';
+import { formatValue } from '@/lib/format';
 import { DollarSign, Users } from 'lucide-react';
 
 export default function TotalsPage() {
@@ -13,11 +14,12 @@ export default function TotalsPage() {
   
   const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: payouts, isLoading: payoutsLoading } = usePayouts();
+  const { data: settings } = useSettings();
 
   const isLoading = childrenLoading || payoutsLoading;
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const formatValueDisplay = (cents: number) => {
+    return formatValue(cents, settings?.displayMode);
   };
 
   const getChildInitials = (name: string) => {
@@ -61,7 +63,7 @@ export default function TotalsPage() {
             </div>
             <h2 className="text-lg font-semibold text-white/90">Family Total</h2>
             <div className="text-4xl font-bold mt-2" data-testid="text-global-total">
-              {formatCurrency(globalTotal)}
+              {formatValueDisplay(globalTotal)}
             </div>
             <p className="text-white/80 text-sm mt-1">Across all children</p>
           </div>
@@ -95,7 +97,7 @@ export default function TotalsPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-brand-coral" data-testid={`text-child-total-${child.id}`}>
-                      {formatCurrency(child.totalCents)}
+                      {formatValueDisplay(child.totalCents)}
                     </div>
                     {child.totalCents > 0 && (
                       <Button

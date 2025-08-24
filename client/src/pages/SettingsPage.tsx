@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
 import AddChoreDialog from '@/components/AddChoreDialog';
-import { Chore } from '@shared/schema';
+import { Chore, Settings } from '@shared/schema';
+import { formatValue } from '@/lib/format';
 import { Plus, Edit2, Trash2, Download, Upload, Users, ListTodo } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -92,7 +93,7 @@ export default function SettingsPage() {
     setShowAddChore(true);
   };
 
-  const handleSettingChange = async (key: keyof typeof settings, value: boolean) => {
+  const handleSettingChange = async (key: keyof Settings, value: boolean | Settings['displayMode']) => {
     if (!settings) return;
 
     try {
@@ -210,7 +211,7 @@ export default function SettingsPage() {
                     {child.name}
                   </h3>
                   <p className="text-brand-grayDark/60 text-sm">
-                    Current balance: {formatCurrency(child.totalCents)}
+                    Current balance: {formatValue(child.totalCents, settings?.displayMode)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -262,7 +263,7 @@ export default function SettingsPage() {
                     {chore.title}
                   </h3>
                   <p className="text-brand-coral font-semibold text-sm" data-testid={`text-chore-value-${chore.id}`}>
-                    {formatCurrency(chore.valueCents)}
+                    {formatValue(chore.valueCents, settings?.displayMode)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -332,6 +333,18 @@ export default function SettingsPage() {
                 checked={settings?.confetti || false}
                 onCheckedChange={(checked) => handleSettingChange('confetti', checked)}
                 data-testid="switch-confetti"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-brand-grayDark">Display Mode</h3>
+                <p className="text-brand-grayDark/60 text-sm">Show values as dollars or points</p>
+              </div>
+              <Switch
+                checked={settings?.displayMode === 'points'}
+                onCheckedChange={(checked) => handleSettingChange('displayMode', checked ? 'points' : 'dollars')}
+                data-testid="switch-display-mode"
               />
             </div>
           </div>
