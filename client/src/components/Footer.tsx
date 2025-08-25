@@ -1,4 +1,4 @@
-import { Heart, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function Footer() {
@@ -6,10 +6,7 @@ export default function Footer() {
     <footer className="bg-white border-t border-brand-grayLight/20 mt-auto flex-shrink-0">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-brand-coral to-brand-teal rounded-lg flex items-center justify-center">
-              <Heart className="text-white text-xs" />
-            </div>
+          <div className="flex items-center justify-center">
             <span className="text-lg font-bold text-brand-coral">Chores & Rewards v1.0.0</span>
           </div>
           
