@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-brand-grayLight/20 mt-12">
+    <footer className="bg-white border-t border-brand-grayLight/20 mt-auto">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
@@ -13,11 +13,8 @@ export default function Footer() {
             <span className="text-lg font-bold text-brand-coral">Chores & Rewards v1.0.0</span>
           </div>
           
-          <div className="text-sm text-brand-grayDark/70 space-y-2">
+          <div className="text-sm text-brand-grayDark/70">
             <p>A family-friendly chore tracking app that works completely offline</p>
-            <p className="font-medium text-brand-grayDark">
-              🔒 We keep no data • No logins required • Everything stays on your device
-            </p>
           </div>
           
           <div className="flex justify-center gap-6 text-sm">

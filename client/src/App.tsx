@@ -13,7 +13,8 @@ import ChoresPage from '@/pages/ChoresPage';
 import TotalsPage from '@/pages/TotalsPage';
 import HistoryPage from '@/pages/HistoryPage';
 import SettingsPage from '@/pages/SettingsPage';
-import { Star, Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
+import { Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
+import logoImage from '@assets/ChoresAppLogoText_1756113034063.webp';
 import { Link, useLocation } from 'wouter';
 import Footer from '@/components/Footer';
 import FeedbackButton from '@/components/FeedbackButton';
@@ -47,19 +48,20 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-grayLight text-brand-grayDark">
+    <div className="min-h-screen bg-brand-grayLight text-brand-grayDark flex flex-col">
       {/* Header */}
       <header className="bg-white sticky top-0 z-10 shadow-soft">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-coral to-brand-teal rounded-lg flex items-center justify-center">
-              <Star className="text-white text-sm" />
-            </div>
-            <span className="text-2xl font-bold text-brand-coral">Chores & Rewards App</span>
+          <div className="flex items-center">
+            <img 
+              src={logoImage} 
+              alt="Chores and Rewards" 
+              className="h-8 w-auto"
+            />
           </div>
           
           {/* Navigation */}
-          <nav className="ml-auto flex gap-1 sm:gap-2 overflow-x-auto">
+          <nav className="ml-auto flex gap-1 sm:gap-2">
             <Link href="/">
               <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
                 location === '/' 
@@ -101,13 +103,12 @@ function AppContent() {
               </button>
             </Link>
             <Link href="/settings">
-              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+              <button className={`nav-tab flex items-center justify-center px-3 py-2 rounded-xl transition-all ${
                 location === '/settings' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
               }`} data-testid="nav-settings">
                 <Settings className="w-4 h-4" />
-                <span className="font-medium hidden sm:inline">Settings</span>
               </button>
             </Link>
           </nav>
@@ -115,7 +116,7 @@ function AppContent() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 flex-1">
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/child/:id">
