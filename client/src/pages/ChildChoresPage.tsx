@@ -187,12 +187,9 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
-                      {chore.title}
-                    </h3>
-                    {chore.isFavorite && <Star className="w-4 h-4 text-brand-yellow fill-current" />}
-                  </div>
+                  <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
+                    {chore.title}
+                  </h3>
                   <p className="text-brand-coral font-semibold" data-testid={`text-chore-value-${chore.id}`}>
                     {formatValueDisplay(chore.valueCents)}
                   </p>

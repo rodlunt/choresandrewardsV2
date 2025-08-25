@@ -13,6 +13,7 @@ import { useSettings } from '@/hooks/use-app-data';
 export default function ChoresPage() {
   const [showAddChore, setShowAddChore] = useState(false);
   const [editingChore, setEditingChore] = useState<Chore | undefined>(undefined);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: settings } = useSettings();
@@ -84,6 +85,9 @@ export default function ChoresPage() {
 
   const favoriteChores = chores?.filter(c => c.isFavorite) || [];
   const regularChores = chores?.filter(c => !c.isFavorite) || [];
+  
+  // Filter chores based on showOnlyFavorites
+  const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
 
   return (
     <div className="space-y-6">
@@ -107,8 +111,16 @@ export default function ChoresPage() {
         <Card className="shadow-soft">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Star className="w-5 h-5 text-brand-yellow" />
-              <h2 className="text-xl font-semibold text-brand-grayDark">Favorite Chores</h2>
+              <button 
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                className="flex items-center gap-2 hover:bg-brand-yellow/10 p-1 rounded transition-colors"
+                data-testid="button-toggle-favorites-filter"
+              >
+                <Star className={`w-5 h-5 ${showOnlyFavorites ? 'text-brand-yellow fill-current' : 'text-brand-yellow'}`} />
+                <h2 className="text-xl font-semibold text-brand-grayDark">
+                  {showOnlyFavorites ? 'Showing Only Favorites' : 'Favorite Chores'}
+                </h2>
+              </button>
             </div>
             <div className="space-y-3">
               {favoriteChores.map((chore) => (
@@ -161,14 +173,15 @@ export default function ChoresPage() {
       )}
 
       {/* All Chores */}
-      <Card className="shadow-soft">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ListTodo className="w-5 h-5 text-brand-teal" />
-            <h2 className="text-xl font-semibold text-brand-grayDark">All Chores</h2>
-          </div>
-          <div className="space-y-3">
-            {regularChores.map((chore) => (
+      {!showOnlyFavorites && (
+        <Card className="shadow-soft">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <ListTodo className="w-5 h-5 text-brand-teal" />
+              <h2 className="text-xl font-semibold text-brand-grayDark">All Chores</h2>
+            </div>
+            <div className="space-y-3">
+              {regularChores.map((chore) => (
               <div key={chore.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-brand-grayLight transition-all" data-testid={`item-chore-${chore.id}`}>
                 <div className="w-10 h-10 bg-brand-teal/20 rounded-lg flex items-center justify-center">
                   <ListTodo className="w-5 h-5 text-brand-teal" />
@@ -212,12 +225,13 @@ export default function ChoresPage() {
                 </div>
               </div>
             ))}
-            {regularChores.length === 0 && favoriteChores.length === 0 && (
-              <p className="text-brand-grayDark/60 text-center py-8">No chores added yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {regularChores.length === 0 && favoriteChores.length === 0 && (
+                <p className="text-brand-grayDark/60 text-center py-8">No chores added yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <AddChoreDialog 
         open={showAddChore} 
