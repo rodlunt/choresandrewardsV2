@@ -14,7 +14,6 @@ import TotalsPage from '@/pages/TotalsPage';
 import HistoryPage from '@/pages/HistoryPage';
 import SettingsPage from '@/pages/SettingsPage';
 import { Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
-import logoImage from '@assets/ChoresAppLogoText_1756113034063.webp';
 import { Link, useLocation } from 'wouter';
 import Footer from '@/components/Footer';
 import FeedbackButton from '@/components/FeedbackButton';
@@ -54,52 +53,52 @@ function AppContent() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
           <div className="flex items-center">
             <img 
-              src={logoImage} 
+              src="/logo.webp" 
               alt="Chores and Rewards" 
               className="h-8 w-auto"
             />
           </div>
           
           {/* Navigation */}
-          <nav className="ml-auto flex gap-1 sm:gap-2">
+          <nav className="ml-auto flex gap-1 flex-shrink-0">
             <Link href="/">
-              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+              <button className={`nav-tab flex items-center gap-1 px-2 sm:px-3 py-2 rounded-xl transition-all ${
                 location === '/' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
               }`} data-testid="nav-home">
                 <Users className="w-4 h-4" />
-                <span className="font-medium hidden sm:inline">Home</span>
+                <span className="font-medium text-xs sm:text-sm hidden sm:inline">Home</span>
               </button>
             </Link>
             <Link href="/totals">
-              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+              <button className={`nav-tab flex items-center gap-1 px-2 sm:px-3 py-2 rounded-xl transition-all ${
                 location === '/totals' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
               }`} data-testid="nav-totals">
                 <DollarSign className="w-4 h-4" />
-                <span className="font-medium hidden sm:inline">Totals</span>
+                <span className="font-medium text-xs sm:text-sm hidden sm:inline">Totals</span>
               </button>
             </Link>
             <Link href="/chores">
-              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+              <button className={`nav-tab flex items-center gap-1 px-2 sm:px-3 py-2 rounded-xl transition-all ${
                 location === '/chores' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
               }`} data-testid="nav-chores">
                 <ListTodo className="w-4 h-4" />
-                <span className="font-medium hidden sm:inline">Chores</span>
+                <span className="font-medium text-xs sm:text-sm hidden sm:inline">Chores</span>
               </button>
             </Link>
             <Link href="/history">
-              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+              <button className={`nav-tab flex items-center gap-1 px-2 sm:px-3 py-2 rounded-xl transition-all ${
                 location === '/history' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
               }`} data-testid="nav-history">
                 <History className="w-4 h-4" />
-                <span className="font-medium hidden sm:inline">History</span>
+                <span className="font-medium text-xs sm:text-sm hidden sm:inline">History</span>
               </button>
             </Link>
             <Link href="/settings">

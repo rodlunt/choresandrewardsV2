@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-brand-grayLight/20 mt-auto">
+    <footer className="bg-white border-t border-brand-grayLight/20 mt-auto flex-shrink-0">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
