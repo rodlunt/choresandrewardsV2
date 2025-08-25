@@ -1,34 +1,29 @@
 import { useState } from 'react';
-import { useChildren, useChores, useSettings, useDeleteChild, useDeleteChore, useUpdateSettings, useExportData, useImportData } from '@/hooks/use-app-data';
+import { useChildren, useSettings, useDeleteChild, useUpdateSettings, useExportData, useImportData } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
-import AddChoreDialog from '@/components/AddChoreDialog';
-import { Chore, Settings } from '@shared/schema';
+import { Settings } from '@shared/schema';
 import { formatValue } from '@/lib/format';
-import { Plus, Edit2, Trash2, Download, Upload, Users, ListTodo } from 'lucide-react';
+import { Plus, Edit2, Trash2, Download, Upload, Users } from 'lucide-react';
 
 export default function SettingsPage() {
   const [showAddChild, setShowAddChild] = useState(false);
-  const [showAddChore, setShowAddChore] = useState(false);
-  const [editingChore, setEditingChore] = useState<Chore | undefined>();
   
   const { data: children, isLoading: childrenLoading } = useChildren();
-  const { data: chores, isLoading: choresLoading } = useChores();
   const { data: settings, isLoading: settingsLoading } = useSettings();
   
   const deleteChild = useDeleteChild();
-  const deleteChore = useDeleteChore();
   const updateSettings = useUpdateSettings();
   const exportData = useExportData();
   const importData = useImportData();
   
   const { toast } = useToast();
 
-  const isLoading = childrenLoading || choresLoading || settingsLoading;
+  const isLoading = childrenLoading || settingsLoading;
 
   const formatCurrency = (cents: number) => {
     return `$${(cents / 100).toFixed(2)}`;
@@ -68,30 +63,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteChore = async (choreId: string, choreTitle: string) => {
-    if (!confirm(`Are you sure you want to delete "${choreTitle}"?`)) {
-      return;
-    }
-
-    try {
-      await deleteChore.mutateAsync(choreId);
-      toast({
-        title: "Success",
-        description: `"${choreTitle}" has been deleted`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete chore",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditChore = (chore: Chore) => {
-    setEditingChore(chore);
-    setShowAddChore(true);
-  };
 
   const handleSettingChange = async (key: keyof Settings, value: boolean | Settings['displayMode']) => {
     if (!settings) return;
@@ -164,10 +135,6 @@ export default function SettingsPage() {
     input.click();
   };
 
-  const handleCloseChoreDialog = () => {
-    setShowAddChore(false);
-    setEditingChore(undefined);
-  };
 
   if (isLoading) {
     return <LoadingSpinner className="min-h-[50vh]" />;
@@ -177,7 +144,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-brand-grayDark">Settings</h1>
-        <p className="text-brand-grayDark/70 mt-1">Manage children, chores, and app preferences</p>
+        <p className="text-brand-grayDark/70 mt-1">Manage children and app preferences</p>
       </div>
 
       {/* Children Management */}
@@ -234,66 +201,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Chores Management */}
-      <Card className="shadow-soft">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ListTodo className="w-5 h-5 text-brand-teal" />
-              <h2 className="text-xl font-semibold text-brand-grayDark">Chores</h2>
-            </div>
-            <Button
-              onClick={() => setShowAddChore(true)}
-              size="sm"
-              className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft"
-              data-testid="button-add-chore-settings"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Chore
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {chores?.map((chore) => (
-              <div key={chore.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-brand-grayLight transition-all" data-testid={`item-chore-${chore.id}`}>
-                <div className="w-10 h-10 bg-brand-teal/20 rounded-lg flex items-center justify-center">
-                  <ListTodo className="w-5 h-5 text-brand-teal" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
-                    {chore.title}
-                  </h3>
-                  <p className="text-brand-coral font-semibold text-sm" data-testid={`text-chore-value-${chore.id}`}>
-                    {formatValue(chore.valueCents, settings?.displayMode)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleEditChore(chore)}
-                    className="text-brand-grayDark/60 hover:text-brand-grayDark hover:bg-brand-grayLight"
-                    data-testid={`button-edit-chore-${chore.id}`}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteChore(chore.id, chore.title)}
-                    className="text-brand-coral/60 hover:text-brand-coral hover:bg-brand-coral/10"
-                    data-testid={`button-delete-chore-${chore.id}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {chores?.length === 0 && (
-              <p className="text-brand-grayDark/60 text-center py-4">No chores added yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Feedback Settings */}
       <Card className="shadow-soft">
@@ -394,11 +301,6 @@ export default function SettingsPage() {
       </Card>
 
       <AddChildDialog open={showAddChild} onOpenChange={setShowAddChild} />
-      <AddChoreDialog 
-        open={showAddChore} 
-        onOpenChange={handleCloseChoreDialog}
-        existingChore={editingChore}
-      />
     </div>
   );
 }

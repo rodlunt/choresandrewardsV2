@@ -6,7 +6,7 @@ export default function FeedbackButton() {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleFeedbackClick = () => {
-    window.open('https://github.com/your-username/chores-and-rewards/issues/new', '_blank');
+    window.open('https://github.com/replit/chores-and-rewards/issues/new', '_blank');
   };
 
   return (
