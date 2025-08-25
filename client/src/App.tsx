@@ -55,7 +55,7 @@ function AppContent() {
             <div className="w-8 h-8 bg-gradient-to-br from-brand-coral to-brand-teal rounded-lg flex items-center justify-center">
               <Star className="text-white text-sm" />
             </div>
-            <span className="text-2xl font-bold text-brand-coral">Chores</span>
+            <span className="text-2xl font-bold text-brand-coral">Chores & Rewards</span>
           </div>
           
           {/* Navigation */}
