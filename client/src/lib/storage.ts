@@ -114,15 +114,25 @@ export class AppStorage {
 
   // Settings operations
   async getSettings(): Promise<Settings> {
-    const db = await getDB();
-    const settings = await db.get('settings', 'app-settings');
-    return settings || { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
+    try {
+      const db = await getDB();
+      const settings = await db.get('settings', 'app-settings');
+      return settings || { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
+    } catch (error) {
+      console.error('Storage getSettings error:', error);
+      return { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
+    }
   }
 
   async updateSettings(settings: Settings): Promise<Settings> {
-    const db = await getDB();
-    await db.put('settings', { ...settings }, 'app-settings');
-    return settings;
+    try {
+      const db = await getDB();
+      await db.put('settings', { ...settings }, 'app-settings');
+      return settings;
+    } catch (error) {
+      console.error('Storage updateSettings error:', error);
+      throw new Error('Failed to update settings in storage');
+    }
   }
 
   // Data export/import
