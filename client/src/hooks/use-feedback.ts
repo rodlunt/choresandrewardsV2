@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { audioManager } from '@/lib/audio';
 import { hapticsManager } from '@/lib/haptics';
 import { useSettings } from './use-app-data';
+// @ts-ignore
 import confetti from 'canvas-confetti';
 
 export function useFeedback() {
