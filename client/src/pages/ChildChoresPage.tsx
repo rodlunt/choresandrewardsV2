@@ -21,6 +21,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const [showPayoutDialog, setShowPayoutDialog] = useState(false);
   const [showAddChore, setShowAddChore] = useState(false);
   const [editingChore, setEditingChore] = useState<Chore | undefined>(undefined);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   
   const { data: child, isLoading: childLoading } = useChild(childId);
   const { data: chores, isLoading: choresLoading } = useChores();
@@ -128,7 +129,9 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   // Separate favorites and regular chores
   const favoriteChores = chores?.filter(c => c.isFavorite) || [];
   const regularChores = chores?.filter(c => !c.isFavorite) || [];
-  const sortedChores = [...favoriteChores, ...regularChores];
+  
+  // Filter chores based on showOnlyFavorites
+  const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
 
   return (
     <div className="space-y-6">
@@ -172,17 +175,27 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         </Button>
       </div>
 
+      {/* Favorite Chores Filter */}
+      {favoriteChores.length > 0 && (
+        <Card className="shadow-soft">
+          <CardContent className="p-4">
+            <button 
+              onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+              className="flex items-center gap-2 hover:bg-brand-yellow/10 p-2 rounded transition-colors w-full"
+              data-testid="button-toggle-favorites-filter"
+            >
+              <Star className={`w-5 h-5 ${showOnlyFavorites ? 'text-brand-yellow fill-current' : 'text-brand-yellow'}`} />
+              <h2 className="text-lg font-semibold text-brand-grayDark">
+                {showOnlyFavorites ? 'Showing Only Favorites' : 'Favorite Chores'}
+              </h2>
+            </button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Chores List */}
       <div className="space-y-3">
-        {favoriteChores.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-brand-grayDark/70 mb-2 flex items-center gap-2">
-              <Star className="w-4 h-4 text-brand-yellow" />
-              Favorite Chores
-            </h3>
-          </div>
-        )}
-        {sortedChores?.map((chore) => (
+        {choresToShow?.map((chore) => (
           <Card key={chore.id} className="shadow-soft" data-testid={`card-chore-${chore.id}`}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -236,10 +249,21 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
             </CardContent>
           </Card>
         ))}
+        
+        {/* Empty favorites state */}
+        {showOnlyFavorites && favoriteChores.length === 0 && (
+          <Card className="shadow-soft">
+            <CardContent className="p-8 text-center">
+              <Star className="w-12 h-12 text-brand-yellow/20 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-brand-grayDark mb-2">No Favorite Chores</h3>
+              <p className="text-brand-grayDark/60">Star some chores to mark them as favorites!</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Empty State */}
-      {chores?.length === 0 && (
+      {!showOnlyFavorites && chores?.length === 0 && (
         <Card className="shadow-soft">
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 bg-brand-grayLight rounded-xl flex items-center justify-center mx-auto mb-4">
