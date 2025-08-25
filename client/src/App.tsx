@@ -9,11 +9,14 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import FirstRunPage from '@/pages/FirstRunPage';
 import HomePage from '@/pages/HomePage';
 import ChildChoresPage from '@/pages/ChildChoresPage';
+import ChoresPage from '@/pages/ChoresPage';
 import TotalsPage from '@/pages/TotalsPage';
 import HistoryPage from '@/pages/HistoryPage';
 import SettingsPage from '@/pages/SettingsPage';
-import { Star, Users, DollarSign, History, Settings } from 'lucide-react';
+import { Star, Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import Footer from '@/components/Footer';
+import FeedbackButton from '@/components/FeedbackButton';
 
 function AppContent() {
   const [location] = useLocation();
@@ -77,6 +80,16 @@ function AppContent() {
                 <span className="font-medium hidden sm:inline">Totals</span>
               </button>
             </Link>
+            <Link href="/chores">
+              <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+                location === '/chores' 
+                  ? 'bg-white text-brand-coral shadow-soft' 
+                  : 'text-brand-grayDark hover:bg-white/70'
+              }`} data-testid="nav-chores">
+                <ListTodo className="w-4 h-4" />
+                <span className="font-medium hidden sm:inline">Chores</span>
+              </button>
+            </Link>
             <Link href="/history">
               <button className={`nav-tab flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
                 location === '/history' 
@@ -109,6 +122,7 @@ function AppContent() {
             {(params) => <ChildChoresPage childId={params.id} />}
           </Route>
           <Route path="/totals" component={TotalsPage} />
+          <Route path="/chores" component={ChoresPage} />
           <Route path="/history" component={HistoryPage} />
           <Route path="/settings" component={SettingsPage} />
           <Route>
@@ -123,6 +137,9 @@ function AppContent() {
           </Route>
         </Switch>
       </main>
+      
+      <Footer />
+      <FeedbackButton />
     </div>
   );
 }

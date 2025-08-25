@@ -66,6 +66,7 @@ export class AppStorage {
       ...data,
       id: nanoid(),
       createdAt: new Date(),
+      isFavorite: false,
     };
     await db.add('chores', chore);
     return chore;

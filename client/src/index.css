@@ -8,6 +8,7 @@
   --brand-coral: hsl(348, 85%, 61%);
   --brand-teal: hsl(173, 80%, 40%);
   --brand-yellow: hsl(51, 95%, 53%);
+  --brand-yellow-text: hsl(51, 95%, 35%); /* 20% darker for better contrast */
   --brand-sky: hsl(217, 91%, 60%);
   --brand-grayDark: hsl(209, 20%, 25%);
   --brand-grayLight: hsl(220, 14%, 98%);
@@ -88,6 +89,10 @@
   
   .text-brand-yellow {
     color: var(--brand-yellow);
+  }
+  
+  .text-brand-yellow-dark {
+    color: var(--brand-yellow-text);
   }
   
   .text-brand-sky {

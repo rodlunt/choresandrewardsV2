@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useDeleteChore, useUpdateChore, useSettings } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
 import AddChoreDialog from '@/components/AddChoreDialog';
 import { formatValue } from '@/lib/format';
-import { ArrowLeft, Check, DollarSign, Edit, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Check, DollarSign, Edit, Trash2, Plus, Star } from 'lucide-react';
 import { Chore } from '@shared/schema';
 
 interface ChildChoresPageProps {
@@ -27,6 +27,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const { data: settings } = useSettings();
   const completeChore = useCompleteChore();
   const deleteChore = useDeleteChore();
+  const updateChore = useUpdateChore();
   const { choreFeedback } = useFeedback();
   const { toast } = useToast();
 
@@ -85,6 +86,25 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     }
   };
 
+  const handleToggleFavorite = async (chore: Chore) => {
+    try {
+      await updateChore.mutateAsync({
+        id: chore.id,
+        updates: { isFavorite: !chore.isFavorite }
+      });
+      toast({
+        title: "Success",
+        description: `"${chore.title}" ${chore.isFavorite ? 'removed from' : 'added to'} favorites`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAddChore = () => {
     setEditingChore(undefined);
     setShowAddChore(true);
@@ -104,6 +124,11 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
       </div>
     );
   }
+
+  // Separate favorites and regular chores
+  const favoriteChores = chores?.filter(c => c.isFavorite) || [];
+  const regularChores = chores?.filter(c => !c.isFavorite) || [];
+  const sortedChores = [...favoriteChores, ...regularChores];
 
   return (
     <div className="space-y-6">
@@ -139,7 +164,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
       <div className="mb-4">
         <Button
           onClick={handleAddChore}
-          className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-grayDark w-full py-4 shadow-soft"
+          className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-yellow-dark w-full py-4 shadow-soft"
           data-testid="button-add-chore"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -149,19 +174,39 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
 
       {/* Chores List */}
       <div className="space-y-3">
-        {chores?.map((chore) => (
+        {favoriteChores.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-brand-grayDark/70 mb-2 flex items-center gap-2">
+              <Star className="w-4 h-4 text-brand-yellow" />
+              Favorite Chores
+            </h3>
+          </div>
+        )}
+        {sortedChores?.map((chore) => (
           <Card key={chore.id} className="shadow-soft" data-testid={`card-chore-${chore.id}`}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1">
-                  <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
-                    {chore.title}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
+                      {chore.title}
+                    </h3>
+                    {chore.isFavorite && <Star className="w-4 h-4 text-brand-yellow fill-current" />}
+                  </div>
                   <p className="text-brand-coral font-semibold" data-testid={`text-chore-value-${chore.id}`}>
                     {formatValueDisplay(chore.valueCents)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => handleToggleFavorite(chore)}
+                    variant="ghost"
+                    size="sm"
+                    className={`p-2 ${chore.isFavorite ? 'text-brand-yellow hover:text-brand-yellow/80' : 'text-brand-grayDark/40 hover:text-brand-yellow'} hover:bg-brand-yellow/10`}
+                    data-testid={`button-toggle-favorite-${chore.id}`}
+                  >
+                    <Star className={`w-4 h-4 ${chore.isFavorite ? 'fill-current' : ''}`} />
+                  </Button>
                   <Button
                     onClick={() => handleEditChore(chore)}
                     variant="outline"

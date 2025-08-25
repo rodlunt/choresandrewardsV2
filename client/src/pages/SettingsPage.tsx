@@ -339,13 +339,25 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-brand-grayDark">Display Mode</h3>
-                <p className="text-brand-grayDark/60 text-sm">Show values as dollars or points</p>
+                <p className="text-brand-grayDark/60 text-sm">
+                  Currently showing: <span className="font-medium text-brand-coral">
+                    {settings?.displayMode === 'points' ? 'Points' : 'Dollars'}
+                  </span>
+                </p>
               </div>
-              <Switch
-                checked={settings?.displayMode === 'points'}
-                onCheckedChange={(checked) => handleSettingChange('displayMode', checked ? 'points' : 'dollars')}
-                data-testid="switch-display-mode"
-              />
+              <div className="flex items-center gap-3">
+                <span className={`text-sm ${settings?.displayMode === 'dollars' ? 'text-brand-grayDark font-medium' : 'text-brand-grayDark/50'}`}>
+                  $
+                </span>
+                <Switch
+                  checked={settings?.displayMode === 'points'}
+                  onCheckedChange={(checked) => handleSettingChange('displayMode', checked ? 'points' : 'dollars')}
+                  data-testid="switch-display-mode"
+                />
+                <span className={`text-sm ${settings?.displayMode === 'points' ? 'text-brand-grayDark font-medium' : 'text-brand-grayDark/50'}`}>
+                  pts
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -368,7 +380,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleImport}
               disabled={importData.isPending}
-              className="bg-brand-yellow hover:bg-brand-yellow/90 shadow-soft"
+              className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-yellow-dark shadow-soft"
               data-testid="button-import-data"
             >
               <Upload className="w-4 h-4 mr-2" />

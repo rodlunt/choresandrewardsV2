@@ -23,11 +23,13 @@ export const choreSchema = z.object({
   title: z.string().min(1, "Title is required"),
   valueCents: z.number().int().min(1, "Value must be at least 1 cent"),
   createdAt: z.date(),
+  isFavorite: z.boolean().default(false),
 });
 
 export const insertChoreSchema = choreSchema.omit({ 
   id: true, 
-  createdAt: true 
+  createdAt: true,
+  isFavorite: true
 });
 
 export type Chore = z.infer<typeof choreSchema>;
