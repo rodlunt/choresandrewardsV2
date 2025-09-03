@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Caddy reverse proxy with automatic SSL
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - ACME_AGREE=true
+
+  # Your chores app
+  chores-app:
+    build: .
+    container_name: chores-rewards-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    expose:
+      - "5000"
+
+volumes:
+  caddy_data:
+  caddy_config:
