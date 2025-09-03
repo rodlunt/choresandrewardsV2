@@ -1,0 +1,447 @@
+PS E:\Prod\ChoresandRewards> Get-Content docker-compose.production.yml | Select-String -A 8 "labels:"
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (# Production se...ltiple websites:PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (services::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (  # Traefik reverse proxy:PSObject) [Select-String], ParameterBindingE
+   xception
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (  traefik::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    image: traefik:v3.0:PSObject) [Select-String], ParameterBindingExc
+   eption
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    container_name: traefik:PSObject) [Select-String], ParameterBindin
+   gException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    ports::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "80:80"     # HTTP:PSObject) [Select-String], ParameterBinding
+   Exception
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "443:443"   # HTTPS:PSObject) [Select-String], ParameterBindin
+   gException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "8080:8...oard (optional):PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    volumes::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - /var/ru.../docker.sock:ro:PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - ./traef.../traefik.yml:ro:PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - ./acme.json:/acme.json:PSObject) [Select-String], ParameterBin
+   dingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    restart: unless-stopped:PSObject) [Select-String], ParameterBindin
+   gException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (  # Chores & Rewards app:PSObject) [Select-String], ParameterBindingEx
+   ception
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (  chores-app::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    build: .:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    container_name: chores-rewards-app:PSObject) [Select-String], Para
+   meterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    restart: unless-stopped:PSObject) [Select-String], ParameterBindin
+   gException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    environment::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - NODE_ENV=production:PSObject) [Select-String], ParameterBindin
+   gException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - PORT=5000:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    labels::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefik.enable=true":PSObject) [Select-String], ParameterBind
+   ingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...92.168.1.200`)":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...ints=websecure":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...ver=myresolver":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...92.168.1.200`)":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...ntrypoints=web":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...ice=chores-app":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "traefi...rver.port=5000":PSObject) [Select-String], Parameter
+   BindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    expose::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (      - "5000":PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (networks::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (  default::PSObject) [Select-String], ParameterBindingException
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+Select-String : The input object cannot be bound to any parameters for the command either because the command does not
+take pipeline input or the input and its properties do not match any of the parameters that take pipeline input.
+At line:1 char:45
++ ... -Content docker-compose.production.yml | Select-String -A 8 "labels:"
++                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (    name: traefik-network:PSObject) [Select-String], ParameterBindingE
+   xception
+    + FullyQualifiedErrorId : InputObjectNotBound,Microsoft.PowerShell.Commands.SelectStringCommand
+
+PS E:\Prod\ChoresandRewards>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
