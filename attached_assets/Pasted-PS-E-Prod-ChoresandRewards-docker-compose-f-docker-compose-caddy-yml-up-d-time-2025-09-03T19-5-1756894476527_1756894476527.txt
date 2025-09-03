@@ -1,0 +1,16 @@
+PS E:\Prod\ChoresandRewards> docker-compose -f docker-compose.caddy.yml up -d
+time="2025-09-03T19:50:11+10:00" level=warning msg="E:\\Prod\\ChoresandRewards\\docker-compose.caddy.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+[+] Running 5/5
+ ✔ caddy Pulled                                                                                                    7.4s
+   ✔ 4f4fb700ef54 Pull complete                                                                                    3.5s
+   ✔ 634211206164 Pull complete                                                                                    1.2s
+   ✔ edccfae94f0e Pull complete                                                                                    0.9s
+   ✔ 2e53616944a4 Pull complete                                                                                    3.5s
+[+] Running 4/5
+ ✔ Network choresandrewards_default        Created                                                                 0.0s
+ ✔ Volume "choresandrewards_caddy_data"    Created                                                                 0.0s
+ ✔ Volume "choresandrewards_caddy_config"  Created                                                                 0.0s
+ ✔ Container chores-rewards-app            Started                                                                 0.6s
+ - Container caddy                         Starting                                                                0.6s
+Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/run/desktop/mnt/host/e/Prod/ChoresandRewards/Caddyfile" to rootfs at "/etc/caddy/Caddyfile": create mountpoint for /etc/caddy/Caddyfile mount: cannot create subdirectories in "/var/lib/docker/rootfs/overlayfs/2d1a2b1ce575aeb813aa4fd843b76561630b389fff716b89983afb5ed9cf1267/etc/caddy/Caddyfile": not a directory: unknown: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type
+PS E:\Prod\ChoresandRewards>

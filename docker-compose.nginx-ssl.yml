@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-ssl.conf:/etc/nginx/nginx.conf:ro
+      - ssl_certs:/etc/letsencrypt
+    depends_on:
+      - chores-app
+
+  # Certbot for automatic SSL
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - ssl_certs:/etc/letsencrypt
+      - ssl_www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email rod.lunt@me.com --agree-tos --no-eff-email -d choresandrewards.app -d www.choresandrewards.app
+
+  # Your app
+  chores-app:
+    build: .
+    container_name: chores-rewards-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    expose:
+      - "5000"
+
+volumes:
+  ssl_certs:
+  ssl_www:
