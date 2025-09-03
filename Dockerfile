@@ -16,8 +16,8 @@ COPY . .
 # Build the client application
 RUN npm run build
 
-# Clean up dev dependencies after build
-RUN npm prune --production
+# Don't clean up dev dependencies - we need tsx for production
+# RUN npm prune --production
 
 # Expose port
 EXPOSE 5000
@@ -30,5 +30,5 @@ ENV PORT=5000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000 || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application directly with tsx (avoids bundling issues)
+CMD ["npx", "tsx", "server/index.ts"]
