@@ -1,9 +1,0 @@
-# Automatic HTTPS for your domain
-www.choresandrewards.app, choresandrewards.app {
-    reverse_proxy chores-app:5000
-}
-
-# HTTP only for local IP (no SSL for IP addresses)
-192.168.1.200 {
-    reverse_proxy chores-app:5000
-}
