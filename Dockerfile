@@ -16,6 +16,9 @@ COPY . .
 # Build the client application
 RUN npm run build
 
+# Copy built files to where server expects them
+RUN cp -r dist/public server/public
+
 # Don't clean up dev dependencies - we need tsx for production
 # RUN npm prune --production
 
