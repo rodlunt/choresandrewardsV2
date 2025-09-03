@@ -1,0 +1,38 @@
+# Production setup with Traefik reverse proxy for multiple websites
+version: '3.8'
+
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    ports:
+      - "80:80"     # HTTP
+      - "443:443"   # HTTPS
+      - "8080:8080" # Traefik dashboard (optional)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./acme.json:/acme.json
+    restart: unless-stopped
+
+  # Chores & Rewards app
+  chores-app:
+    build: .
+    container_name: chores-rewards-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chores-app.rule=Host(`www.choresandrewards.app`) || Host(`choresandrewards.app`)"
+      - "traefik.http.routers.chores-app.entrypoints=websecure"
+      - "traefik.http.routers.chores-app.tls.certresolver=myresolver"
+      - "traefik.http.services.chores-app.loadbalancer.server.port=5000"
+    expose:
+      - "5000"
+
+networks:
+  default:
+    name: traefik-network

@@ -1,0 +1,31 @@
+# Traefik configuration for multiple websites
+api:
+  dashboard: true
+  debug: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      tlsChallenge: {}
+      email: your-email@example.com  # Change this to your email
+      storage: acme.json
+      # Use Let's Encrypt staging for testing
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
