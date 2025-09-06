@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
+import PWAInstallButton from '@/components/PWAInstallButton';
 import { formatValue } from '@/lib/format';
 import { Link } from 'wouter';
 import { Plus, Users, DollarSign, TrendingUp } from 'lucide-react';
@@ -56,14 +57,17 @@ export default function HomePage() {
           <h1 className="text-3xl font-bold text-brand-grayDark">Family Dashboard</h1>
           <p className="text-brand-grayDark/70 mt-1">Track chores and rewards for your family</p>
         </div>
-        <Button
-          onClick={() => setShowAddChild(true)}
-          className="ml-auto bg-brand-coral hover:bg-brand-coral/90 shadow-soft"
-          data-testid="button-add-child"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Child
-        </Button>
+        <div className="flex gap-3 ml-auto">
+          <PWAInstallButton />
+          <Button
+            onClick={() => setShowAddChild(true)}
+            className="bg-brand-coral hover:bg-brand-coral/90 shadow-soft"
+            data-testid="button-add-child"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Child
+          </Button>
+        </div>
       </div>
 
       {/* Children Grid */}
