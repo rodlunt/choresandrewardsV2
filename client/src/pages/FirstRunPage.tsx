@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateChild } from '@/hooks/use-app-data';
 import { useToast } from '@/hooks/use-toast';
-import { Star } from 'lucide-react';
 
 interface FirstRunPageProps {
   onComplete: () => void;
@@ -50,7 +49,11 @@ export default function FirstRunPage({ onComplete }: FirstRunPageProps) {
         <CardContent className="pt-6">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-brand-coral to-brand-teal rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Star className="text-white text-2xl" />
+              <img 
+                src="/logo.webp" 
+                alt="Chores and Rewards" 
+                className="w-10 h-10"
+              />
             </div>
             <h1 className="text-2xl font-bold text-brand-coral mb-2">Welcome to Chores</h1>
             <p className="text-brand-grayDark/70">Let's start by adding your first child</p>
