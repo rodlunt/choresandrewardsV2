@@ -48,11 +48,11 @@ export default function FirstRunPage({ onComplete }: FirstRunPageProps) {
       <Card className="w-full max-w-md shadow-soft">
         <CardContent className="pt-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-brand-coral to-brand-teal rounded-xl flex items-center justify-center mx-auto mb-4">
+            <div className="flex items-center justify-center mx-auto mb-4">
               <img 
                 src="/logo.webp" 
                 alt="Chores and Rewards" 
-                className="w-10 h-10"
+                className="h-16 w-auto"
               />
             </div>
             <h1 className="text-2xl font-bold text-brand-coral mb-2">Welcome to Chores</h1>
