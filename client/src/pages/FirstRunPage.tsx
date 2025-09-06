@@ -55,7 +55,7 @@ export default function FirstRunPage({ onComplete }: FirstRunPageProps) {
                 className="h-16 w-auto"
               />
             </div>
-            <h1 className="text-2xl font-bold text-brand-coral mb-2">Welcome to Chores</h1>
+            <h1 className="text-2xl font-bold text-brand-coral mb-2">Welcome!</h1>
             <p className="text-brand-grayDark/70">Let's start by adding your first child</p>
           </div>
 
