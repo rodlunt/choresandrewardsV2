@@ -14,7 +14,17 @@ This repository is configured for automatic deployment to your production server
 
 ## 🔧 Setup Instructions
 
-### 1. Generate SSH Key (if you don't have one)
+### Option A: Using Existing GitHub Deploy Key ✅ (Recommended)
+
+If you already have a GitHub deploy key set up:
+
+1. **Locate your existing private key** on your local machine or server
+2. Copy the **private key content** (usually in `~/.ssh/id_ed25519` or `~/.ssh/id_rsa`)
+3. Skip to **Step 2: Configure GitHub Secrets** below
+
+### Option B: Generate New SSH Key (Alternative)
+
+If you want a dedicated key for GitHub Actions:
 
 On your local machine:
 ```bash
@@ -25,8 +35,6 @@ This creates two files:
 - `~/.ssh/github_actions_deploy` (private key)
 - `~/.ssh/github_actions_deploy.pub` (public key)
 
-### 2. Add Public Key to Server
-
 Copy the public key to your server:
 ```bash
 ssh-copy-id -i ~/.ssh/github_actions_deploy.pub user@homeserver
@@ -34,7 +42,9 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub user@homeserver
 
 Or manually add it to `~/.ssh/authorized_keys` on the server.
 
-### 3. Configure GitHub Secrets
+---
+
+### Step 2: Configure GitHub Secrets
 
 Go to your GitHub repository:
 1. Navigate to **Settings** → **Secrets and variables** → **Actions**
