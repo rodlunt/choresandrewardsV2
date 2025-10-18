@@ -41,7 +41,14 @@
       "Bash(git commit -m \"Add SSH connection test workflow\n\n- Create test workflow to verify secrets and SSH connection\n- Checks server hostname, user, and paths\n- Verifies Docker and Docker Compose availability\n- Manual trigger only for testing\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
       "Bash(git commit -m \"Fix deployment to use correct docker-compose file\n\n- Use docker-compose-standard-ssl.yml instead of default\n- Add -f flag to all docker-compose commands\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
       "Bash(git rm BUG_REPORT_FEATURE.md deployment-guide.md deployment-instructions.md SETUP_INSTRUCTIONS.md replit.md Caddyfile.txt deploy-from-github.ps1 check-deployment.ps1 .replit)",
-      "Bash(git rm docker-compose-standard-ssl.yml)"
+      "Bash(git rm docker-compose-standard-ssl.yml)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nClean up project: remove redundant files and simplify Docker setup\n\n**Removed redundant documentation:**\n- BUG_REPORT_FEATURE.md (outdated, feature already implemented)\n- deployment-guide.md (duplicates .github/DEPLOYMENT.md)\n- deployment-instructions.md (duplicates .github/DEPLOYMENT.md)\n- SETUP_INSTRUCTIONS.md (outdated)\n- replit.md (not using Replit)\n- Caddyfile.txt (config is in docker-compose)\n\n**Removed redundant scripts:**\n- deploy-from-github.ps1 (replaced by GitHub Actions)\n- check-deployment.ps1 (not needed)\n- .replit (not using Replit)\n\n**Simplified Docker setup:**\n- Renamed docker-compose-standard-ssl.yml → docker-compose.yml\n- Updated deployment workflow to use standard docker-compose.yml\n- Cleaner, simpler configuration\n\n**Result:**\n- Single source of truth for deployment: .github/DEPLOYMENT.md\n- Single docker-compose.yml file (no confusion)\n- Automated deployment via GitHub Actions\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git add docker-compose.yml)",
+      "Bash(git commit -m \"Remove Caddy from docker-compose to use shared Caddy\n\n- Remove Caddy container (using existing caddy-ssl container)\n- Keep only app container\n- Connect to external caddy_network\n- App accessible at chores-rewards-app:5000 for reverse proxy\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git add package-lock.json)",
+      "Bash(npm audit)",
+      "Bash(npm ls --all)",
+      "Bash(git commit -m \"Update package-lock.json after dependency updates\n\n- Regenerate lock file to match updated package.json\n- All dependencies validated (0 vulnerabilities)\n- Required for Docker build to succeed\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
     ],
     "deny": [],
     "ask": []
