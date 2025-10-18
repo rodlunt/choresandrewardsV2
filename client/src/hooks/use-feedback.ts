@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { audioManager } from '@/lib/audio';
 import { hapticsManager } from '@/lib/haptics';
 import { useSettings } from './use-app-data';
 // @ts-ignore
@@ -10,22 +9,9 @@ export function useFeedback() {
 
   useEffect(() => {
     if (settings) {
-      audioManager.setEnabled(settings.sounds);
       hapticsManager.setEnabled(settings.haptics);
     }
   }, [settings]);
-
-  const playCompleteSound = async () => {
-    if (settings?.sounds) {
-      await audioManager.playComplete();
-    }
-  };
-
-  const playPayoutSound = async () => {
-    if (settings?.sounds) {
-      await audioManager.playPayout();
-    }
-  };
 
   const completeHaptic = async () => {
     if (settings?.haptics) {
@@ -51,25 +37,17 @@ export function useFeedback() {
   };
 
   const choreFeedback = async () => {
-    await Promise.all([
-      playCompleteSound(),
-      completeHaptic(),
-    ]);
+    await completeHaptic();
   };
 
   const payoutFeedback = async () => {
-    await Promise.all([
-      playPayoutSound(),
-      payoutHaptic(),
-    ]);
+    await payoutHaptic();
     showConfetti();
   };
 
   return {
     choreFeedback,
     payoutFeedback,
-    playCompleteSound,
-    playPayoutSound,
     completeHaptic,
     payoutHaptic,
     showConfetti,

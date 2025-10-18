@@ -209,18 +209,6 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-brand-grayDark">Sound Effects</h3>
-                <p className="text-brand-grayDark/60 text-sm">Play sounds when completing chores</p>
-              </div>
-              <Switch
-                checked={settings?.sounds || false}
-                onCheckedChange={(checked) => handleSettingChange('sounds', checked)}
-                data-testid="switch-sounds"
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
                 <h3 className="font-medium text-brand-grayDark">Haptic Feedback</h3>
                 <p className="text-brand-grayDark/60 text-sm">Vibrate on task completion</p>
               </div>
@@ -230,7 +218,7 @@ export default function SettingsPage() {
                 data-testid="switch-haptics"
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-brand-grayDark">Confetti</h3>

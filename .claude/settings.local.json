@@ -14,7 +14,11 @@
       "Bash(gh issue close 5 --comment \"Resolved: Removed duplicate entries in .gitignore file. The file now has a single, clean set of ignore rules organized by category (Dependencies, Production builds, Environment files, Docker volumes, Logs, OS files, Replit files, Agent state, Codacy, and VSCode AI rules).\")",
       "Bash(npm ls --depth=0)",
       "Bash(git add .gitignore .claude/settings.local.json)",
-      "Bash(git rm BUG_REPORT_IMPLEMENTATION.md)"
+      "Bash(git rm BUG_REPORT_IMPLEMENTATION.md)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd favorites feature, PWA icons, bug reporting, and clean up configuration\n\n- Add per-child favorite chores functionality with UI filters and star buttons\n- Add PWA icons (android-chrome, apple-touch-icon, favicons) for offline support\n- Enhance PWA install button with iOS support and localStorage dismissal\n- Add bug report feature with GitHub integration\n- Add Codacy configuration to gitignore\n- Remove duplicate entries from gitignore\n- Delete unused BUG_REPORT_IMPLEMENTATION.md documentation\n- Update service worker cache versioning\n\nCloses #2, #3, #5, #10\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(gh issue close 8 --comment \"Resolved: Service worker no longer references sound files. The current sw.js (as of latest commit) only caches essential PWA assets and does not include /sounds/complete.mp3 or /sounds/payout.mp3.\n\nThe AudioManager in client/src/lib/audio.ts does reference these sounds, but it gracefully handles their absence with try/catch blocks and console warnings. No errors are shown to users.\n\nIf sound functionality is desired in the future, sound files can be added to client/public/sounds/ directory. For now, the service worker is working correctly and caching only files that exist.\")",
+      "Bash(git add -A)"
     ],
     "deny": [],
     "ask": []

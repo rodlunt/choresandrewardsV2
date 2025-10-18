@@ -117,10 +117,10 @@ export class AppStorage {
     try {
       const db = await getDB();
       const settings = await db.get('settings', 'app-settings');
-      return settings || { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
+      return settings || { haptics: true, confetti: true, displayMode: 'dollars' as const };
     } catch (error) {
       console.error('Storage getSettings error:', error);
-      return { sounds: true, haptics: true, confetti: true, displayMode: 'dollars' as const };
+      return { haptics: true, confetti: true, displayMode: 'dollars' as const };
     }
   }
 

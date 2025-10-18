@@ -54,7 +54,6 @@ export type InsertPayout = z.infer<typeof insertPayoutSchema>;
 
 // Settings schema
 export const settingsSchema = z.object({
-  sounds: z.boolean().default(true),
   haptics: z.boolean().default(true),
   confetti: z.boolean().default(true),
   displayMode: z.enum(['dollars', 'points']).default('dollars'),
