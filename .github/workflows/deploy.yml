@@ -28,20 +28,14 @@ jobs:
             echo "📥 Pulling latest changes..."
             git pull origin main
 
-            echo "📦 Installing dependencies..."
-            npm install --prefer-offline --no-audit
-
-            echo "🔨 Building application..."
-            npm run build
-
-            echo "🔄 Restarting application..."
-            # Uncomment the appropriate restart command:
-            # pm2 restart chores-app
-            # docker-compose restart
-            # systemctl restart chores-app
-            # npm run start
+            echo "🔄 Rebuilding and restarting Docker containers..."
+            docker-compose down
+            docker-compose up -d --build
 
             echo "✅ Deployment complete!"
+
+            echo "📊 Container status:"
+            docker-compose ps
 
       - name: Notify deployment status
         if: always()
