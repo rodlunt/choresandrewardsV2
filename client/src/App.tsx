@@ -139,7 +139,7 @@ function AppContent() {
       </main>
       
       <Footer />
-      {/* <FeedbackButton /> */}
+      <FeedbackButton />
     </div>
   );
 }

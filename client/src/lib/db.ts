@@ -28,8 +28,8 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
     return dbInstance;
   }
 
-  dbInstance = await openDB<ChoresDB>('chores-rewards-db', 1, {
-    upgrade(db) {
+  dbInstance = await openDB<ChoresDB>('chores-rewards-db', 2, {
+    upgrade(db, oldVersion) {
       // Children store
       if (!db.objectStoreNames.contains('children')) {
         db.createObjectStore('children', { keyPath: 'id' });
@@ -49,6 +49,11 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings');
       }
+
+      // Migration from v1 to v2: Add favoriteChoreIds to existing children
+      if (oldVersion < 2) {
+        migrateToV2(db);
+      }
     },
   });
 
@@ -58,35 +63,52 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   return dbInstance;
 }
 
+// Migration function to add favoriteChoreIds to existing children
+async function migrateToV2(db: IDBPDatabase<ChoresDB>): Promise<void> {
+  const tx = db.transaction('children', 'readwrite');
+  const store = tx.objectStore('children');
+  const allChildren = await store.getAll();
+
+  for (const child of allChildren) {
+    // Add favoriteChoreIds if it doesn't exist
+    if (!child.favoriteChoreIds) {
+      child.favoriteChoreIds = [];
+      await store.put(child);
+    }
+  }
+
+  await tx.done;
+}
+
 async function seedDefaultChores(db: IDBPDatabase<ChoresDB>): Promise<void> {
   const existingChores = await db.getAll('chores');
   if (existingChores.length === 0) {
     const now = new Date();
     const defaultChores: Chore[] = [
-      { id: nanoid(), title: "Vacuum inc edges & couch cushions", valueCents: 500, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Mop House", valueCents: 500, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Clean room", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Make dinner", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Fix couch up", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Feed Missy", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Fill Missy's water bowl", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Febreeze house", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Put washing in machine", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Take rubbish", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Put clothes away", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Wipe down bathroom", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Dusting surfaces", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Tidy play room", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Putting shopping away", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Cleaning up after self", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Filling dishwasher", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Empty dishwasher", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Cleaning kitchen", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Making bed", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Shower", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Read a book (Over 40 pages)", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Something kind for someone else", valueCents: 100, createdAt: now, isFavorite: false },
-      { id: nanoid(), title: "Not spending money for a week", valueCents: 500, createdAt: now, isFavorite: false }
+      { id: nanoid(), title: "Vacuum inc edges & couch cushions", valueCents: 500, createdAt: now },
+      { id: nanoid(), title: "Mop House", valueCents: 500, createdAt: now },
+      { id: nanoid(), title: "Clean room", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Make dinner", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Fix couch up", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Feed Missy", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Fill Missy's water bowl", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Febreeze house", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Put washing in machine", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Take rubbish", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Put clothes away", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Wipe down bathroom", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Dusting surfaces", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Tidy play room", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Putting shopping away", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Cleaning up after self", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Filling dishwasher", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Empty dishwasher", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Cleaning kitchen", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Making bed", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Shower", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Read a book (Over 40 pages)", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Something kind for someone else", valueCents: 100, createdAt: now },
+      { id: nanoid(), title: "Not spending money for a week", valueCents: 500, createdAt: now }
     ];
 
     const tx = db.transaction('chores', 'readwrite');

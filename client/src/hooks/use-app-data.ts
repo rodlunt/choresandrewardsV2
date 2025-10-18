@@ -150,11 +150,93 @@ export function useExportData() {
 
 export function useImportData() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: AppData) => storage.importData(data),
     onSuccess: () => {
       queryClient.invalidateQueries();
     },
   });
+}
+
+// Favorite chores hooks (per-child)
+export function useToggleFavoriteChore(childId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (choreId: string) => storage.toggleFavoriteChore(childId, choreId),
+    onMutate: async (choreId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['children'] });
+      await queryClient.cancelQueries({ queryKey: ['children', childId] });
+
+      // Snapshot previous value
+      const previousChildren = queryClient.getQueryData<Child[]>(['children']);
+      const previousChild = queryClient.getQueryData<Child>(['children', childId]);
+
+      // Optimistically update
+      if (previousChildren) {
+        queryClient.setQueryData<Child[]>(['children'], (old) =>
+          old?.map(child => {
+            if (child.id === childId) {
+              const favoriteIds = child.favoriteChoreIds || [];
+              const isFavorite = favoriteIds.includes(choreId);
+              return {
+                ...child,
+                favoriteChoreIds: isFavorite
+                  ? favoriteIds.filter(id => id !== choreId)
+                  : [...favoriteIds, choreId]
+              };
+            }
+            return child;
+          }) || []
+        );
+      }
+
+      if (previousChild) {
+        queryClient.setQueryData<Child>(['children', childId], (old) => {
+          if (!old) return old;
+          const favoriteIds = old.favoriteChoreIds || [];
+          const isFavorite = favoriteIds.includes(choreId);
+          return {
+            ...old,
+            favoriteChoreIds: isFavorite
+              ? favoriteIds.filter(id => id !== choreId)
+              : [...favoriteIds, choreId]
+          };
+        });
+      }
+
+      return { previousChildren, previousChild };
+    },
+    onError: (err, choreId, context) => {
+      // Rollback on error
+      if (context?.previousChildren) {
+        queryClient.setQueryData(['children'], context.previousChildren);
+      }
+      if (context?.previousChild) {
+        queryClient.setQueryData(['children', childId], context.previousChild);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['children', childId] });
+    },
+  });
+}
+
+export function useIsChoreFavorite(childId: string, choreId: string): boolean {
+  const { data: child } = useChild(childId);
+  if (!child) return false;
+  return (child.favoriteChoreIds || []).includes(choreId);
+}
+
+export function useFavoriteChores(childId: string) {
+  const { data: child } = useChild(childId);
+  const { data: allChores } = useChores();
+
+  if (!child || !allChores) return [];
+
+  const favoriteIds = child.favoriteChoreIds || [];
+  return allChores.filter(chore => favoriteIds.includes(chore.id));
 }

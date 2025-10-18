@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore, useUpdateChore, useSettings } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore, useIsChoreFavorite } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const { data: settings } = useSettings();
   const completeChore = useCompleteChore();
   const deleteChore = useDeleteChore();
-  const updateChore = useUpdateChore();
+  const toggleFavorite = useToggleFavoriteChore(childId);
   const { choreFeedback } = useFeedback();
   const { toast } = useToast();
 
@@ -88,14 +88,13 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   };
 
   const handleToggleFavorite = async (chore: Chore) => {
+    const isFavorite = (child?.favoriteChoreIds || []).includes(chore.id);
+
     try {
-      await updateChore.mutateAsync({
-        id: chore.id,
-        updates: { isFavorite: !chore.isFavorite }
-      });
+      await toggleFavorite.mutateAsync(chore.id);
       toast({
         title: "Success",
-        description: `"${chore.title}" ${chore.isFavorite ? 'removed from' : 'added to'} favorites`,
+        description: `"${chore.title}" ${isFavorite ? 'removed from' : 'added to'} favorites`,
       });
     } catch (error) {
       toast({
@@ -126,10 +125,19 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     );
   }
 
-  // Separate favorites and regular chores
-  const favoriteChores = chores?.filter(c => c.isFavorite) || [];
-  const regularChores = chores?.filter(c => !c.isFavorite) || [];
-  
+  // Get favorite chore IDs for this child
+  const favoriteChoreIds = child?.favoriteChoreIds || [];
+
+  // Separate favorites and regular chores based on child's favorites
+  const { favoriteChores, regularChores } = useMemo(() => {
+    if (!chores) return { favoriteChores: [], regularChores: [] };
+
+    const favorites = chores.filter(c => favoriteChoreIds.includes(c.id));
+    const regular = chores.filter(c => !favoriteChoreIds.includes(c.id));
+
+    return { favoriteChores: favorites, regularChores: regular };
+  }, [chores, favoriteChoreIds]);
+
   // Filter chores based on showOnlyFavorites
   const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
 
@@ -195,28 +203,31 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
 
       {/* Chores List */}
       <div className="space-y-3">
-        {choresToShow?.map((chore) => (
-          <Card key={chore.id} className="shadow-soft" data-testid={`card-chore-${chore.id}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
-                    {chore.title}
-                  </h3>
-                  <p className="text-brand-coral font-semibold" data-testid={`text-chore-value-${chore.id}`}>
-                    {formatValueDisplay(chore.valueCents)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => handleToggleFavorite(chore)}
-                    variant="ghost"
-                    size="sm"
-                    className={`p-2 ${chore.isFavorite ? 'text-brand-yellow hover:text-brand-yellow/80' : 'text-brand-grayDark/40 hover:text-brand-yellow'} hover:bg-brand-yellow/10`}
-                    data-testid={`button-toggle-favorite-${chore.id}`}
-                  >
-                    <Star className={`w-4 h-4 ${chore.isFavorite ? 'fill-current' : ''}`} />
-                  </Button>
+        {choresToShow?.map((chore) => {
+          const isFavorite = favoriteChoreIds.includes(chore.id);
+
+          return (
+            <Card key={chore.id} className="shadow-soft" data-testid={`card-chore-${chore.id}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-brand-grayDark" data-testid={`text-chore-title-${chore.id}`}>
+                      {chore.title}
+                    </h3>
+                    <p className="text-brand-coral font-semibold" data-testid={`text-chore-value-${chore.id}`}>
+                      {formatValueDisplay(chore.valueCents)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleToggleFavorite(chore)}
+                      variant="ghost"
+                      size="sm"
+                      className={`p-2 ${isFavorite ? 'text-brand-yellow hover:text-brand-yellow/80' : 'text-brand-grayDark/40 hover:text-brand-yellow'} hover:bg-brand-yellow/10`}
+                      data-testid={`button-toggle-favorite-${chore.id}`}
+                    >
+                      <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+                    </Button>
                   <Button
                     onClick={() => handleEditChore(chore)}
                     variant="outline"
@@ -235,20 +246,21 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
-                  <Button
-                    onClick={() => handleCompleteChore(chore.id, chore.title, chore.valueCents)}
-                    disabled={completeChore.isPending}
-                    className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft px-4 py-2"
-                    data-testid={`button-complete-chore-${chore.id}`}
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Complete
-                  </Button>
+                    <Button
+                      onClick={() => handleCompleteChore(chore.id, chore.title, chore.valueCents)}
+                      disabled={completeChore.isPending}
+                      className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft px-4 py-2"
+                      data-testid={`button-complete-chore-${chore.id}`}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Complete
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
         
         {/* Empty favorites state */}
         {showOnlyFavorites && favoriteChores.length === 0 && (

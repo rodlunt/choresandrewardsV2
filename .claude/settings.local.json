@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm outdated)",
+      "Bash(dir /b)",
+      "Bash(npm install)",
+      "Bash(npm install --prefer-offline --no-audit)",
+      "Bash(gh issue close 2 --comment \"Resolved: Updated manifest.json, sw.js, and index.html to use proper PNG icons (android-chrome-192x192.png, android-chrome-512x512.png, apple-touch-icon.png, favicons). All icon files have been generated and placed in client/public/. Cache version bumped to v2.\")",
+      "Bash(gh issue close 3 --comment \"Resolved: Enhanced PWAInstallButton component with iOS support, localStorage-based dismissal tracking, ''Remind Me Later'' functionality, and step-by-step installation instructions for iOS users. The button now properly detects iOS devices and shows manual installation guide since iOS Safari doesn''t support beforeinstallprompt event.\")",
+      "Bash(del BUG_REPORT_FEATURE.md BUG_REPORT_FLASK_MIGRATION_GUIDE.md)",
+      "Bash(gh issue list)",
+      "Bash(gh issue list --state all)",
+      "Bash(gh issue close 10 --comment \"Resolved: Favorites feature is fully implemented and working. Each child can now mark their own favorite chores, filter to show only favorites, and toggle favorites with the star button. Implementation includes:\\n- Per-child favorite chore tracking (favoriteChoreIds in Child schema)\\n- Storage layer methods (toggleFavoriteChore, isChoreFavorite, getFavoriteChores)\\n- UI with star buttons, filter toggle, and toast notifications\\n- Empty state messaging\\n\\nVerified working in ChildChoresPage.tsx, storage.ts, and schema.ts.\")",
+      "Bash(gh issue close 5 --comment \"Resolved: Removed duplicate entries in .gitignore file. The file now has a single, clean set of ignore rules organized by category (Dependencies, Production builds, Environment files, Docker volumes, Logs, OS files, Replit files, Agent state, Codacy, and VSCode AI rules).\")",
+      "Bash(npm ls --depth=0)",
+      "Bash(git add .gitignore .claude/settings.local.json)",
+      "Bash(git rm BUG_REPORT_IMPLEMENTATION.md)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

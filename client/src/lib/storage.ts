@@ -20,6 +20,7 @@ export class AppStorage {
       ...data,
       id: nanoid(),
       totalCents: 0,
+      favoriteChoreIds: [],
       createdAt: new Date(),
     };
     await db.add('children', child);
@@ -66,7 +67,6 @@ export class AppStorage {
       ...data,
       id: nanoid(),
       createdAt: new Date(),
-      isFavorite: false,
     };
     await db.add('chores', chore);
     return chore;
@@ -206,6 +206,39 @@ export class AppStorage {
     const updatedChild = await this.updateChild(childId, { totalCents: 0 });
 
     return { child: updatedChild, payout };
+  }
+
+  // Favorite chores operations (per-child)
+  async toggleFavoriteChore(childId: string, choreId: string): Promise<Child> {
+    const child = await this.getChild(childId);
+    if (!child) {
+      throw new Error('Child not found');
+    }
+
+    const favoriteChoreIds = child.favoriteChoreIds || [];
+    const isFavorite = favoriteChoreIds.includes(choreId);
+
+    const updatedFavorites = isFavorite
+      ? favoriteChoreIds.filter(id => id !== choreId)
+      : [...favoriteChoreIds, choreId];
+
+    return this.updateChild(childId, { favoriteChoreIds: updatedFavorites });
+  }
+
+  async isChoreFavorite(childId: string, choreId: string): Promise<boolean> {
+    const child = await this.getChild(childId);
+    if (!child) return false;
+    return (child.favoriteChoreIds || []).includes(choreId);
+  }
+
+  async getFavoriteChores(childId: string): Promise<Chore[]> {
+    const child = await this.getChild(childId);
+    if (!child) return [];
+
+    const allChores = await this.getAllChores();
+    const favoriteIds = child.favoriteChoreIds || [];
+
+    return allChores.filter(chore => favoriteIds.includes(chore.id));
   }
 }
 

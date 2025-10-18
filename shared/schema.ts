@@ -5,13 +5,15 @@ export const childSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required"),
   totalCents: z.number().int().min(0).default(0),
+  favoriteChoreIds: z.array(z.string()).default([]),
   createdAt: z.date(),
 });
 
-export const insertChildSchema = childSchema.omit({ 
-  id: true, 
-  totalCents: true, 
-  createdAt: true 
+export const insertChildSchema = childSchema.omit({
+  id: true,
+  totalCents: true,
+  favoriteChoreIds: true,
+  createdAt: true
 });
 
 export type Child = z.infer<typeof childSchema>;
@@ -23,13 +25,11 @@ export const choreSchema = z.object({
   title: z.string().min(1, "Title is required"),
   valueCents: z.number().int().min(1, "Value must be at least 1 cent"),
   createdAt: z.date(),
-  isFavorite: z.boolean().default(false),
 });
 
-export const insertChoreSchema = choreSchema.omit({ 
-  id: true, 
-  createdAt: true,
-  isFavorite: true
+export const insertChoreSchema = choreSchema.omit({
+  id: true,
+  createdAt: true
 });
 
 export type Chore = z.infer<typeof choreSchema>;
