@@ -41,3 +41,8 @@ coverage-report.json
 
 # VSCode AI rules
 .github/instructions/codacy.instructions.md
+
+# Attached assets (temporary files, screenshots, etc)
+attached_assets/
+!attached_assets/ChoresAndRewardsLogo_*.png
+!attached_assets/ChoresAppLogoText_*.webp
