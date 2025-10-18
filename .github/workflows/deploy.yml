@@ -29,13 +29,13 @@ jobs:
             git pull origin main
 
             echo "🔄 Rebuilding and restarting Docker containers..."
-            docker-compose -f docker-compose-standard-ssl.yml down
-            docker-compose -f docker-compose-standard-ssl.yml up -d --build
+            docker-compose down
+            docker-compose up -d --build
 
             echo "✅ Deployment complete!"
 
             echo "📊 Container status:"
-            docker-compose -f docker-compose-standard-ssl.yml ps
+            docker-compose ps
 
       - name: Notify deployment status
         if: always()

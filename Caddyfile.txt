@@ -1,9 +1,0 @@
-www.choresandrewards.app {
-    reverse_proxy chores-app:5000
-    encode gzip
-}
-
-# Redirect apex domain to www
-choresandrewards.app {
-    redir https://www.choresandrewards.app{uri} permanent
-}

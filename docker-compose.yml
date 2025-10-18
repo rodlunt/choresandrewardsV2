@@ -4,30 +4,18 @@ services:
     container_name: caddy-ssl
     restart: unless-stopped
     ports:
-      - "80:80"     # Standard HTTP
-      - "443:443"   # Standard HTTPS
-
+      - "80:80"
+      - "443:443"
     command: |
       sh -c 'echo "
-      # Standard ports with Let'\''s Encrypt SSL
+      # SSL with Let'\''s Encrypt
       www.choresandrewards.app {
-          reverse_proxy chores-app:5000
+          reverse_proxy app:5000
           encode gzip
       }
-      
+
       choresandrewards.app {
           redir https://www.choresandrewards.app{uri} permanent
-      }
-      
-      # Backup ports (for compatibility)
-      www.choresandrewards.app:8443 {
-          reverse_proxy chores-app:5000
-          encode gzip
-      }
-      
-      www.choresandrewards.app:8080 {
-          reverse_proxy chores-app:5000
-          encode gzip
       }
       " > /etc/caddy/Caddyfile && caddy run --config /etc/caddy/Caddyfile'
     volumes:
@@ -36,7 +24,7 @@ services:
     networks:
       - app-network
 
-  chores-app:
+  app:
     build: .
     container_name: chores-rewards-app
     restart: unless-stopped
