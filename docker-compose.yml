@@ -1,29 +1,4 @@
 services:
-  caddy:
-    image: caddy:2-alpine
-    container_name: caddy-ssl
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    command: |
-      sh -c 'echo "
-      # SSL with Let'\''s Encrypt
-      www.choresandrewards.app {
-          reverse_proxy app:5000
-          encode gzip
-      }
-
-      choresandrewards.app {
-          redir https://www.choresandrewards.app{uri} permanent
-      }
-      " > /etc/caddy/Caddyfile && caddy run --config /etc/caddy/Caddyfile'
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - app-network
-
   app:
     build: .
     container_name: chores-rewards-app
@@ -32,11 +7,8 @@ services:
       - NODE_ENV=production
       - PORT=5000
     networks:
-      - app-network
-
-volumes:
-  caddy_data:
-  caddy_config:
+      - caddy_network
 
 networks:
-  app-network:
+  caddy_network:
+    external: true
