@@ -17,6 +17,7 @@ import { Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import Footer from '@/components/Footer';
 import FeedbackButton from '@/components/FeedbackButton';
+import BuyMeCoffeeBanner from '@/components/BuyMeCoffeeBanner';
 
 function AppContent() {
   const [location] = useLocation();
@@ -48,6 +49,9 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-brand-grayLight text-brand-grayDark flex flex-col">
+      {/* Buy Me A Coffee Banner */}
+      <BuyMeCoffeeBanner />
+
       {/* Header */}
       <header className="bg-white sticky top-0 z-10 shadow-soft">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
