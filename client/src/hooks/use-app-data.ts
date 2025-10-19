@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storage } from '@/lib/storage';
-import { InsertChild, InsertChore, Settings, AppData } from '@shared/schema';
+import { InsertChild, InsertChore, Settings, AppData, Child } from '@shared/schema';
 
 export function useChildren() {
   return useQuery({
