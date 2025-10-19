@@ -1,8 +1,6 @@
-const CACHE_NAME = 'chores-rewards-v2';
+const CACHE_NAME = 'chores-rewards-v3';
 const urlsToCache = [
   '/',
-  '/src/main.tsx',
-  '/src/index.css',
   '/manifest.json',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png',
@@ -26,19 +24,31 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - network first, fall back to cache
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+        // Clone the response and cache it
+        if (response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
       })
       .catch(() => {
-        // If both cache and network fail, return offline page for navigation requests
-        if (event.request.destination === 'document') {
-          return caches.match('/');
-        }
+        // If network fails, try cache
+        return caches.match(event.request).then((response) => {
+          if (response) {
+            return response;
+          }
+          // If both cache and network fail, return offline page for navigation requests
+          if (event.request.destination === 'document') {
+            return caches.match('/');
+          }
+        });
       })
   );
 });
