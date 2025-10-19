@@ -29,7 +29,7 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   }
 
   dbInstance = await openDB<ChoresDB>('chores-rewards-db', 2, {
-    upgrade(db, oldVersion) {
+    upgrade(db, oldVersion, newVersion, transaction) {
       // Children store
       if (!db.objectStoreNames.contains('children')) {
         db.createObjectStore('children', { keyPath: 'id' });
@@ -51,8 +51,17 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
       }
 
       // Migration from v1 to v2: Add favoriteChoreIds to existing children
-      if (oldVersion < 2) {
-        migrateToV2(db);
+      // IMPORTANT: Use the existing upgrade transaction, don't create a new one
+      if (oldVersion < 2 && db.objectStoreNames.contains('children')) {
+        const store = transaction.objectStore('children');
+        store.getAll().then(async (allChildren) => {
+          for (const child of allChildren) {
+            if (!child.favoriteChoreIds) {
+              child.favoriteChoreIds = [];
+              await store.put(child);
+            }
+          }
+        });
       }
     },
   });
@@ -61,23 +70,6 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   await seedDefaultChores(dbInstance);
 
   return dbInstance;
-}
-
-// Migration function to add favoriteChoreIds to existing children
-async function migrateToV2(db: IDBPDatabase<ChoresDB>): Promise<void> {
-  const tx = db.transaction('children', 'readwrite');
-  const store = tx.objectStore('children');
-  const allChildren = await store.getAll();
-
-  for (const child of allChildren) {
-    // Add favoriteChoreIds if it doesn't exist
-    if (!child.favoriteChoreIds) {
-      child.favoriteChoreIds = [];
-      await store.put(child);
-    }
-  }
-
-  await tx.done;
 }
 
 async function seedDefaultChores(db: IDBPDatabase<ChoresDB>): Promise<void> {
