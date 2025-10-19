@@ -126,16 +126,16 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   }
 
   // Separate favorites and regular chores based on child's favorites
-  const { favoriteChores, regularChores, favoriteChoreIds } = useMemo(() => {
-    const favoriteIds = child?.favoriteChoreIds || [];
+  // Memoize ALL derived state together to maintain stable hook count in React 19
+  const { favoriteChoreIds, favoriteChores, regularChores } = useMemo(() => {
+    const favIds = child?.favoriteChoreIds || [];
+    if (!chores) return { favoriteChoreIds: favIds, favoriteChores: [], regularChores: [] };
 
-    if (!chores) return { favoriteChores: [], regularChores: [], favoriteChoreIds: favoriteIds };
+    const favorites = chores.filter(c => favIds.includes(c.id));
+    const regular = chores.filter(c => !favIds.includes(c.id));
 
-    const favorites = chores.filter(c => favoriteIds.includes(c.id));
-    const regular = chores.filter(c => !favoriteIds.includes(c.id));
-
-    return { favoriteChores: favorites, regularChores: regular, favoriteChoreIds: favoriteIds };
-  }, [chores, child?.favoriteChoreIds]);
+    return { favoriteChoreIds: favIds, favoriteChores: favorites, regularChores: regular };
+  }, [chores, child]);
 
   // Filter chores based on showOnlyFavorites
   const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
