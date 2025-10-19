@@ -6,11 +6,11 @@ This repository is configured for automatic deployment to your production server
 
 1. Push code to `main` branch
 2. GitHub Actions triggers automatically
-3. Connects to your server via SSH
-4. Pulls latest changes
-5. Installs dependencies
-6. Builds the application
-7. Restarts the service
+3. Connects to your server via SSH (port 2223)
+4. Pulls latest changes from GitHub
+5. Runs `docker-compose down` to stop containers
+6. Runs `docker-compose up -d --build` to rebuild and restart
+7. Displays container status
 
 ## 🔧 Setup Instructions
 
@@ -50,48 +50,41 @@ Go to your GitHub repository:
 1. Navigate to **Settings** → **Secrets and variables** → **Actions**
 2. Click **New repository secret** for each:
 
-#### Required Secrets:
+#### Required Secrets (Already Configured):
 
-| Secret Name | Description | Example |
+| Secret Name | Description | Current Value (Example) |
 |------------|-------------|---------|
-| `SERVER_HOST` | Your server hostname or IP | `homeserver` or `192.168.1.100` |
-| `SERVER_USERNAME` | SSH username | `rodlu` or `administrator` |
-| `SSH_PRIVATE_KEY` | Private SSH key content | Contents of `~/.ssh/github_actions_deploy` |
-| `DEPLOY_PATH` | Deployment directory on server | `/home/rodlu/prod/ChoresandRewards` |
+| `SERVER_HOST` | Your server hostname or IP | `180.181.214.90` |
+| `SERVER_USERNAME` | SSH username | `user` |
+| `SSH_PRIVATE_KEY` | Private SSH key content | (existing deploy key) |
+| `DEPLOY_PATH` | Deployment directory on server | `E:/Prod/ChoresandRewards` |
+| `SERVER_PORT` | SSH port | `2223` |
 
-#### Optional Secrets:
+### 4. Deployment Script (Already Configured)
 
-| Secret Name | Description | Default |
-|------------|-------------|---------|
-| `SERVER_PORT` | SSH port | `22` |
-
-### 4. Update Deployment Script
-
-Edit `.github/workflows/deploy.yml` and uncomment the appropriate restart command:
+The deployment script in `.github/workflows/deploy.yml` is already configured for Docker Compose:
 
 ```yaml
-# For PM2:
-pm2 restart chores-app
-
-# For Docker Compose:
-docker-compose restart
-
-# For systemd:
-systemctl restart chores-app
-
-# For npm:
-npm run start
+script: |
+  cd ${{ secrets.DEPLOY_PATH }}
+  git pull origin main
+  docker-compose down
+  docker-compose up -d --build
+  docker-compose ps
 ```
+
+No changes needed unless you want to customize the deployment process.
 
 ## 📋 Server Requirements
 
 Your server must have:
-- [x] Git installed
-- [x] Node.js installed (v18+)
-- [x] npm installed
-- [x] SSH access enabled
-- [x] Git repository cloned at `DEPLOY_PATH`
-- [x] Appropriate permissions for deployment user
+- [x] Git installed ✅
+- [x] Docker installed ✅
+- [x] Docker Compose installed ✅
+- [x] SSH access enabled (port 2223) ✅
+- [x] Git repository cloned at `DEPLOY_PATH` ✅
+- [x] Appropriate permissions for deployment user ✅
+- [x] `web` Docker network created ✅
 
 ## 🧪 Testing the Deployment
 
@@ -253,5 +246,7 @@ If you encounter issues:
 
 ---
 
-**Last Updated**: 2025-10-18
+**Status**: ✅ Fully Operational - Deployment working perfectly
+**Last Updated**: 2025-10-19
 **Workflow File**: `.github/workflows/deploy.yml`
+**Production URL**: https://www.choresandrewards.app
