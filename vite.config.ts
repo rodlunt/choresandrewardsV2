@@ -27,11 +27,15 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    sourcemap: 'inline', // Inline source maps for debugging
-    minify: false, // Disable minification
+    sourcemap: false, // Enable source maps only in development
+    minify: 'esbuild', // Use esbuild for fast minification
     rollupOptions: {
       output: {
-        manualChunks: undefined, // Keep everything in one chunk for easier debugging
+        manualChunks: {
+          // Split vendor chunks for better caching
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-toast', '@radix-ui/react-checkbox'],
+        },
       },
     },
   },
