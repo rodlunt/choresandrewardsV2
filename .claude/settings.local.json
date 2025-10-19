@@ -6,7 +6,9 @@
       "Bash(git commit -m \"Update documentation with latest deployment status\n\n- Update DEPLOYMENT_STATUS.md with all completed issues and latest updates\n- Add comprehensive feature list including per-child favorites\n- Update current production status (React 19, Express 5, Vite 6)\n- Update .github/DEPLOYMENT.md with actual deployment configuration\n- Reflect Docker-based deployment (not npm install/build)\n- Update server requirements to show Docker instead of Node.js/npm\n- Document SSH port 2223 and correct server paths\n- Mark deployment as fully operational\n\nAll GitHub issues closed (10/10 completed).\nAll documentation now accurately reflects current production setup.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
       "Bash(dir \"\\homeserver\\Prod\" /b)",
       "Bash(findstr /i knob)",
-      "Read(//homeserver/Prod//**)"
+      "Read(//homeserver/Prod//**)",
+      "Bash(git commit -m \"Add Buy Me A Coffee banner to support development\n\n- Create BuyMeCoffeeBanner component with clean, non-intrusive design\n- Position at top of page (above sticky header)\n- Gradient background (coral to yellow) matching brand colors\n- LocalStorage-based dismissal (persists across sessions)\n- Responsive text for mobile and desktop\n- Links to buymeacoffee.com/rodluntgithub (same as amiaknob.today)\n- Close button with smooth dismiss animation\n- Coffee icon from lucide-react\n\nThe banner is subtle and can be permanently dismissed by users.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(gh run watch 18624586025 --exit-status)"
     ],
     "deny": [],
     "ask": []

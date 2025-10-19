@@ -6,9 +6,12 @@ export default function BuyMeCoffeeBanner() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Check if user has previously dismissed the banner
-    const dismissed = localStorage.getItem('bmc-banner-dismissed');
-    if (dismissed === 'true') {
+    // Check if user has clicked the Buy Me A Coffee link before
+    const clicked = localStorage.getItem('bmc-link-clicked');
+    // Check if user closed the banner this session
+    const closedThisSession = sessionStorage.getItem('bmc-banner-closed');
+
+    if (clicked === 'true' || closedThisSession === 'true') {
       setIsVisible(false);
     } else {
       setIsLoaded(true);
@@ -17,7 +20,13 @@ export default function BuyMeCoffeeBanner() {
 
   const handleClose = () => {
     setIsVisible(false);
-    localStorage.setItem('bmc-banner-dismissed', 'true');
+    // Only hide for this session, will show again on next visit
+    sessionStorage.setItem('bmc-banner-closed', 'true');
+  };
+
+  const handleCoffeeClick = () => {
+    // Mark that user clicked the link - don't show banner again
+    localStorage.setItem('bmc-link-clicked', 'true');
   };
 
   if (!isVisible || !isLoaded) {
@@ -36,6 +45,7 @@ export default function BuyMeCoffeeBanner() {
           href="https://buymeacoffee.com/rodluntgithub"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleCoffeeClick}
           className="inline-flex items-center gap-1.5 bg-white text-brand-coral px-3 py-1.5 rounded-lg font-bold hover:bg-brand-grayLight transition-all shadow-sm hover:shadow-md"
         >
           <Coffee className="w-4 h-4" />

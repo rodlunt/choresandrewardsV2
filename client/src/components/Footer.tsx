@@ -1,7 +1,12 @@
-import { Download } from 'lucide-react';
+import { Download, Coffee } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function Footer() {
+  const handleCoffeeClick = () => {
+    // Mark that user clicked the link - don't show banner again
+    localStorage.setItem('bmc-link-clicked', 'true');
+  };
+
   return (
     <footer className="bg-white border-t border-brand-grayLight/20 mt-auto flex-shrink-0">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
@@ -9,12 +14,12 @@ export default function Footer() {
           <div className="flex items-center justify-center">
             <span className="text-lg font-bold text-brand-coral">Chores & Rewards v1.0.0</span>
           </div>
-          
+
           <div className="text-sm text-brand-grayDark/70">
             <p>A family-friendly chore tracking app that works completely offline</p>
           </div>
-          
-          <div className="flex justify-center gap-6 text-sm">
+
+          <div className="flex justify-center gap-6 text-sm flex-wrap">
             <a 
               href="mailto:hello@choresandrewards.app" 
               className="text-brand-coral hover:text-brand-coral/80 transition-colors"
@@ -28,7 +33,7 @@ export default function Footer() {
                 Export/Import
               </button>
             </Link>
-            <button 
+            <button
               onClick={() => {
                 const privacyText = `Privacy Policy
 
@@ -42,7 +47,7 @@ This app is designed with your privacy in mind:
 • Data can be exported/imported at any time by you
 
 This application works completely offline and respects your privacy.`;
-                
+
                 alert(privacyText);
               }}
               className="text-brand-coral hover:text-brand-coral/80 transition-colors"
@@ -50,6 +55,17 @@ This application works completely offline and respects your privacy.`;
             >
               Privacy Policy
             </button>
+            <a
+              href="https://buymeacoffee.com/rodluntgithub"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleCoffeeClick}
+              className="text-brand-coral hover:text-brand-coral/80 transition-colors flex items-center gap-1"
+              data-testid="link-buy-coffee"
+            >
+              <Coffee className="w-3 h-3" />
+              Buy me a coffee
+            </a>
           </div>
           
           <div className="text-xs text-brand-grayDark/50 pt-4 border-t border-brand-grayLight/20">
