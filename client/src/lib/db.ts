@@ -51,17 +51,22 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
       }
 
       // Migration from v1 to v2: Add favoriteChoreIds to existing children
-      // IMPORTANT: Use the existing upgrade transaction, don't create a new one
+      // This runs automatically during upgrade, no need for separate transaction
       if (oldVersion < 2 && db.objectStoreNames.contains('children')) {
         const store = transaction.objectStore('children');
-        store.getAll().then(async (allChildren) => {
-          for (const child of allChildren) {
+        const cursorRequest = store.openCursor();
+
+        cursorRequest.onsuccess = (event: any) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            const child = cursor.value;
             if (!child.favoriteChoreIds) {
               child.favoriteChoreIds = [];
-              await store.put(child);
+              cursor.update(child);
             }
+            cursor.continue();
           }
-        });
+        };
       }
     },
   });
