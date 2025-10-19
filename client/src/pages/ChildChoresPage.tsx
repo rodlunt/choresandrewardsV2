@@ -34,6 +34,18 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
 
   const isLoading = childLoading || choresLoading;
 
+  // IMPORTANT: All hooks must be called BEFORE any conditional returns (React Rules of Hooks)
+  // Memoize ALL derived state together to maintain stable hook count in React 19
+  const { favoriteChoreIds, favoriteChores, regularChores } = useMemo(() => {
+    const favIds = child?.favoriteChoreIds || [];
+    if (!chores) return { favoriteChoreIds: favIds, favoriteChores: [], regularChores: [] };
+
+    const favorites = chores.filter(c => favIds.includes(c.id));
+    const regular = chores.filter(c => !favIds.includes(c.id));
+
+    return { favoriteChoreIds: favIds, favoriteChores: favorites, regularChores: regular };
+  }, [chores, child]);
+
   const formatValueDisplay = (cents: number) => {
     return formatValue(cents, settings?.displayMode);
   };
@@ -48,7 +60,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     try {
       await completeChore.mutateAsync({ childId: child.id, choreValueCents });
       await choreFeedback();
-      
+
       toast({
         title: "🎉 Great job!",
         description: `${choreTitle} completed! +${formatValueDisplay(choreValueCents)}`,
@@ -124,18 +136,6 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
       </div>
     );
   }
-
-  // Separate favorites and regular chores based on child's favorites
-  // Memoize ALL derived state together to maintain stable hook count in React 19
-  const { favoriteChoreIds, favoriteChores, regularChores } = useMemo(() => {
-    const favIds = child?.favoriteChoreIds || [];
-    if (!chores) return { favoriteChoreIds: favIds, favoriteChores: [], regularChores: [] };
-
-    const favorites = chores.filter(c => favIds.includes(c.id));
-    const regular = chores.filter(c => !favIds.includes(c.id));
-
-    return { favoriteChoreIds: favIds, favoriteChores: favorites, regularChores: regular };
-  }, [chores, child]);
 
   // Filter chores based on showOnlyFavorites
   const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
