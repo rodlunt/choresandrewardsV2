@@ -29,7 +29,7 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   }
 
   dbInstance = await openDB<ChoresDB>('chores-rewards-db', 2, {
-    async upgrade(db, oldVersion, newVersion, transaction) {
+    upgrade(db, oldVersion) {
       // Children store
       if (!db.objectStoreNames.contains('children')) {
         db.createObjectStore('children', { keyPath: 'id' });
@@ -50,24 +50,8 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
         db.createObjectStore('settings');
       }
 
-      // Migration from v1 to v2: Add favoriteChoreIds to existing children
-      // CRITICAL: Upgrade callback MUST be async and await cursor completion
-      // The previous implementation used onsuccess which didn't wait, causing
-      // the transaction to complete before migration finished
-      if (oldVersion < 2 && db.objectStoreNames.contains('children')) {
-        const store = transaction.objectStore('children');
-
-        // Use idb's async cursor iteration - properly waits for completion
-        let cursor = await store.openCursor();
-        while (cursor) {
-          const child = cursor.value;
-          if (!child.favoriteChoreIds) {
-            child.favoriteChoreIds = [];
-            await cursor.update(child);
-          }
-          cursor = await cursor.continue();
-        }
-      }
+      // Note: Migration removed - users must delete IndexedDB to upgrade
+      // The favoriteChoreIds field is now added by default when creating children
     },
   });
 
