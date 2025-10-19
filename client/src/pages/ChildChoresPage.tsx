@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore, useIsChoreFavorite } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,18 +125,17 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     );
   }
 
-  // Get favorite chore IDs for this child
-  const favoriteChoreIds = child?.favoriteChoreIds || [];
-
   // Separate favorites and regular chores based on child's favorites
-  const { favoriteChores, regularChores } = useMemo(() => {
-    if (!chores) return { favoriteChores: [], regularChores: [] };
+  const { favoriteChores, regularChores, favoriteChoreIds } = useMemo(() => {
+    const favoriteIds = child?.favoriteChoreIds || [];
 
-    const favorites = chores.filter(c => favoriteChoreIds.includes(c.id));
-    const regular = chores.filter(c => !favoriteChoreIds.includes(c.id));
+    if (!chores) return { favoriteChores: [], regularChores: [], favoriteChoreIds: favoriteIds };
 
-    return { favoriteChores: favorites, regularChores: regular };
-  }, [chores, favoriteChoreIds]);
+    const favorites = chores.filter(c => favoriteIds.includes(c.id));
+    const regular = chores.filter(c => !favoriteIds.includes(c.id));
+
+    return { favoriteChores: favorites, regularChores: regular, favoriteChoreIds: favoriteIds };
+  }, [chores, child?.favoriteChoreIds]);
 
   // Filter chores based on showOnlyFavorites
   const choresToShow = showOnlyFavorites ? favoriteChores : [...favoriteChores, ...regularChores];
