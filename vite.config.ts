@@ -27,8 +27,13 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    sourcemap: true, // Enable source maps for better error debugging
-    minify: false, // Temporarily disable minification to see full error messages
+    sourcemap: 'inline', // Inline source maps for debugging
+    minify: false, // Disable minification
+    rollupOptions: {
+      output: {
+        manualChunks: undefined, // Keep everything in one chunk for easier debugging
+      },
+    },
   },
   server: {
     fs: {
