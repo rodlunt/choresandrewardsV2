@@ -22,55 +22,85 @@ interface ChoresDB extends DBSchema {
 }
 
 let dbInstance: IDBPDatabase<ChoresDB> | null = null;
+let dbPromise: Promise<IDBPDatabase<ChoresDB>> | null = null;
 let isSeeding = false;
 
 export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   if (dbInstance) {
     return dbInstance;
   }
-
-  dbInstance = await openDB<ChoresDB>('chores-rewards-db', 2, {
-    upgrade(db, oldVersion) {
-      // Children store
-      if (!db.objectStoreNames.contains('children')) {
-        db.createObjectStore('children', { keyPath: 'id' });
-      }
-
-      // Chores store
-      if (!db.objectStoreNames.contains('chores')) {
-        db.createObjectStore('chores', { keyPath: 'id' });
-      }
-
-      // Payouts store
-      if (!db.objectStoreNames.contains('payouts')) {
-        db.createObjectStore('payouts', { keyPath: 'id' });
-      }
-
-      // Settings store
-      if (!db.objectStoreNames.contains('settings')) {
-        db.createObjectStore('settings');
-      }
-
-      // Note: Migration removed - users must delete IndexedDB to upgrade
-      // The favoriteChoreIds field is now added by default when creating children
-    },
-  });
-
-  // Wait a tick to ensure upgrade transaction is fully committed
-  // This prevents "A version change transaction is running" error
-  await new Promise(resolve => setTimeout(resolve, 0));
-
-  // Seed default chores if none exist (only once)
-  if (!isSeeding) {
-    isSeeding = true;
-    try {
-      await seedDefaultChores(dbInstance);
-    } finally {
-      isSeeding = false;
-    }
+  if (dbPromise) {
+    return dbPromise;
   }
 
-  return dbInstance;
+  dbPromise = (async () => {
+    const db = await openDB<ChoresDB>('chores-rewards-db', 2, {
+      upgrade(db, oldVersion) {
+        // Children store
+        if (!db.objectStoreNames.contains('children')) {
+          db.createObjectStore('children', { keyPath: 'id' });
+        }
+
+        // Chores store
+        if (!db.objectStoreNames.contains('chores')) {
+          db.createObjectStore('chores', { keyPath: 'id' });
+        }
+
+        // Payouts store
+        if (!db.objectStoreNames.contains('payouts')) {
+          db.createObjectStore('payouts', { keyPath: 'id' });
+        }
+
+        // Settings store
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings');
+        }
+
+        // Note: Migration removed - users must delete IndexedDB to upgrade
+        // The favoriteChoreIds field is now added by default when creating children
+      },
+      blocked() {
+        // Another tab has the database open with a different version
+        // Nothing to do here in this context; open will resolve once unblocked
+      },
+      blocking() {
+        // If another connection is open, close this one to allow upgrade
+        try { db.close(); } catch {}
+      },
+      terminated() {
+        // The connection was unexpectedly closed; let next getDB() reopen
+      }
+    });
+
+    // Ensure we close on future version changes to avoid upgrade deadlocks
+    db.onversionchange = () => {
+      try { db.close(); } catch {}
+    };
+
+    // Wait a tick to ensure upgrade transaction commit completes
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Seed default chores if none exist (only once and not concurrently)
+    if (!isSeeding) {
+      isSeeding = true;
+      try {
+        await seedDefaultChores(db);
+      } finally {
+        isSeeding = false;
+      }
+    }
+
+    dbInstance = db;
+    return db;
+  })();
+
+  try {
+    const result = await dbPromise;
+    return result;
+  } finally {
+    // Clear the promise after resolution to allow future reopens if closed
+    dbPromise = null;
+  }
 }
 
 async function seedDefaultChores(db: IDBPDatabase<ChoresDB>): Promise<void> {
