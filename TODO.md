@@ -5,24 +5,9 @@
 ✅ **Windows compatibility fixed** - Added cross-env for npm scripts
 ✅ **Dev server working** - Running properly at http://localhost:5000
 ✅ **Viewport accessibility fixed** - Removed maximum-scale restriction
+✅ **Favorites bug fixed** - UI state now resets when switching between children
 
 ## Outstanding Items
-
-### Bugs (User Reported - HIGH PRIORITY)
-- [ ] **Favorites not independent per child**
-  - **Issue**: Favorites should be independent for each child
-  - **Current behavior**: [TO BE INVESTIGATED - need specific details]
-  - **Expected**: Each child should have their own separate favorite chores list
-  - **Technical notes**:
-    - Schema is correct: `Child.favoriteChoreIds: string[]` (per-child array)
-    - Storage layer `toggleFavoriteChore(childId, choreId)` looks correct
-    - Hooks `useToggleFavoriteChore(childId)` properly scoped to child
-    - Need to test in browser: Does toggling favorite for Child A affect Child B?
-  - **Files to check**:
-    - `client/src/lib/storage.ts` - toggleFavoriteChore method
-    - `client/src/hooks/use-app-data.ts` - useToggleFavoriteChore hook
-    - `client/src/pages/ChildChoresPage.tsx` - UI implementation
-  - **Next steps**: Need user to provide specific reproduction steps
 
 ### Browser Console Warnings (Non-Critical)
 
@@ -67,6 +52,13 @@
 
 ### Accessibility
 - Removed maximum-scale=1 from viewport meta tag to allow user zooming
+
+### Favorites Bug Fix
+- **Issue**: When setting favorites for Child A, then navigating to Child B, favorites appeared shared
+- **Root Cause**: React component state (showOnlyFavorites) persisted when navigating between children
+- **Fix**: Added useEffect to reset all UI state when childId changes
+- **Result**: Each child now properly shows only their own favorites
+- Commit: 17160e2
 
 ## Development Notes
 
