@@ -22,6 +22,7 @@ interface ChoresDB extends DBSchema {
 }
 
 let dbInstance: IDBPDatabase<ChoresDB> | null = null;
+let isSeeding = false;
 
 export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   if (dbInstance) {
@@ -55,8 +56,19 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
     },
   });
 
-  // Seed default chores if none exist
-  await seedDefaultChores(dbInstance);
+  // Wait a tick to ensure upgrade transaction is fully committed
+  // This prevents "A version change transaction is running" error
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  // Seed default chores if none exist (only once)
+  if (!isSeeding) {
+    isSeeding = true;
+    try {
+      await seedDefaultChores(dbInstance);
+    } finally {
+      isSeeding = false;
+    }
+  }
 
   return dbInstance;
 }

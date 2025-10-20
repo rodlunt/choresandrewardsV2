@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chores-rewards-v13';
+const CACHE_NAME = 'chores-rewards-v14';
 const urlsToCache = [
   '/',
   '/manifest.json',
