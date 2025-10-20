@@ -6,7 +6,13 @@ export class AppStorage {
   // Children operations
   async getAllChildren(): Promise<Child[]> {
     const db = await getDB();
-    return db.getAll('children');
+    const children = await db.getAll('children');
+
+    // Normalize dates in case they were stored as strings (from JSON import)
+    return children.map((c: Child) => ({
+      ...c,
+      createdAt: c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt)
+    }));
   }
 
   async getChild(id: string): Promise<Child | undefined> {
@@ -53,7 +59,13 @@ export class AppStorage {
   // Chores operations
   async getAllChores(): Promise<Chore[]> {
     const db = await getDB();
-    return db.getAll('chores');
+    const chores = await db.getAll('chores');
+
+    // Normalize dates in case they were stored as strings (from JSON import)
+    return chores.map((c: Chore) => ({
+      ...c,
+      createdAt: c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt)
+    }));
   }
 
   async getChore(id: string): Promise<Chore | undefined> {
@@ -92,7 +104,14 @@ export class AppStorage {
   async getAllPayouts(): Promise<Payout[]> {
     const db = await getDB();
     const payouts = await db.getAll('payouts');
-    return payouts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    // Normalize dates in case they were stored as strings (from JSON import)
+    const normalized = payouts.map((p: Payout) => ({
+      ...p,
+      createdAt: p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt)
+    }));
+
+    return normalized.sort((a: Payout, b: Payout) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getPayoutsForChild(childId: string): Promise<Payout[]> {
@@ -155,23 +174,33 @@ export class AppStorage {
 
   async importData(data: AppData): Promise<void> {
     const db = await getDB();
-    
+
     // Clear existing data
     await db.clear('children');
     await db.clear('chores');
     await db.clear('payouts');
-    
-    // Import new data
+
+    // Import new data with date normalization
+    // (JSON.parse converts dates to strings, we need to convert them back to Date objects)
     for (const child of data.children) {
-      await db.add('children', child);
+      await db.add('children', {
+        ...child,
+        createdAt: child.createdAt instanceof Date ? child.createdAt : new Date(child.createdAt)
+      });
     }
     for (const chore of data.chores) {
-      await db.add('chores', chore);
+      await db.add('chores', {
+        ...chore,
+        createdAt: chore.createdAt instanceof Date ? chore.createdAt : new Date(chore.createdAt)
+      });
     }
     for (const payout of data.payouts) {
-      await db.add('payouts', payout);
+      await db.add('payouts', {
+        ...payout,
+        createdAt: payout.createdAt instanceof Date ? payout.createdAt : new Date(payout.createdAt)
+      });
     }
-    
+
     await this.updateSettings(data.settings);
   }
 

@@ -27,8 +27,8 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    sourcemap: true, // DEBUGGING: Enable source maps to see real errors
-    minify: false, // DEBUGGING: Disable minification to see full error messages
+    sourcemap: true, // Keep source maps for production debugging
+    minify: 'esbuild', // Re-enable minification for production
     rollupOptions: {
       output: {
         manualChunks: {

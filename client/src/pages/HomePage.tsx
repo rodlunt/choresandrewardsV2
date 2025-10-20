@@ -40,7 +40,9 @@ export default function HomePage() {
   const thisWeekPayouts = payouts?.filter(p => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    return p.createdAt >= weekAgo;
+    // Defensive: ensure createdAt is a Date object (handles string dates from JSON import)
+    const payoutDate = p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt);
+    return payoutDate >= weekAgo;
   }) || [];
 
   const totalEarned = children?.reduce((sum, child) => sum + child.totalCents, 0) || 0;
