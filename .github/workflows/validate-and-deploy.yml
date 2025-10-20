@@ -1,0 +1,120 @@
+name: Validate and Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Run Pre-Deployment Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run check
+        continue-on-error: false
+
+      - name: Build application
+        run: npm run build
+        continue-on-error: false
+
+      - name: Check for React Hook violations
+        run: |
+          echo "🔍 Checking for React Hook violations..."
+
+          # Check for hooks called after conditional returns
+          if grep -r "if.*return" client/src --include="*.tsx" --include="*.ts" -A 20 | grep -E "use[A-Z]|useMemo|useEffect|useState|useCallback"; then
+            echo "⚠️  WARNING: Potential hooks called after conditional returns"
+          fi
+
+          # Check for hooks in loops
+          if grep -r "for\|while\|map.*=>.*{" client/src --include="*.tsx" --include="*.ts" -A 5 | grep -E "use[A-Z]"; then
+            echo "⚠️  WARNING: Potential hooks in loops"
+          fi
+
+      - name: Validate build output
+        run: |
+          if [ ! -d "dist/public" ]; then
+            echo "❌ Build output directory not found!"
+            exit 1
+          fi
+
+          # Check build size
+          BUILD_SIZE=$(du -sh dist/public | cut -f1)
+          echo "✅ Build size: $BUILD_SIZE"
+
+          # Check for critical files
+          for file in "index.html" "assets"; do
+            if [ ! -e "dist/public/$file" ]; then
+              echo "❌ Missing critical file: $file"
+              exit 1
+            fi
+          done
+
+          echo "✅ All critical build files present"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Server
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "📥 Pulling latest changes..."
+            git pull origin main
+
+            echo "🔄 Rebuilding and restarting Docker containers..."
+            docker-compose down
+            docker-compose up -d --build
+
+            echo "✅ Deployment complete!"
+
+            echo "📊 Container status:"
+            docker-compose ps
+
+            echo "🔍 Checking app health..."
+            sleep 5
+            docker logs chores-rewards-app --tail 20
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
