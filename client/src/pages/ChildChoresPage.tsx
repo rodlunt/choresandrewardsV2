@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
@@ -22,7 +22,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const [showAddChore, setShowAddChore] = useState(false);
   const [editingChore, setEditingChore] = useState<Chore | undefined>(undefined);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
-  
+
   const { data: child, isLoading: childLoading } = useChild(childId);
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: settings } = useSettings();
@@ -31,6 +31,14 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const toggleFavorite = useToggleFavoriteChore(childId);
   const { choreFeedback } = useFeedback();
   const { toast } = useToast();
+
+  // Reset UI state when childId changes (navigating between children)
+  useEffect(() => {
+    setShowOnlyFavorites(false);
+    setShowPayoutDialog(false);
+    setShowAddChore(false);
+    setEditingChore(undefined);
+  }, [childId]);
 
   const isLoading = childLoading || choresLoading;
 
