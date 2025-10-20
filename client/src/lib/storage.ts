@@ -17,7 +17,17 @@ export class AppStorage {
 
   async getChild(id: string): Promise<Child | undefined> {
     const db = await getDB();
-    return db.get('children', id);
+    const child = await db.get('children', id);
+
+    // Normalize dates in case they were stored as strings (from JSON import)
+    if (child) {
+      return {
+        ...child,
+        createdAt: child.createdAt instanceof Date ? child.createdAt : new Date(child.createdAt)
+      };
+    }
+
+    return child;
   }
 
   async createChild(data: InsertChild): Promise<Child> {
@@ -70,7 +80,17 @@ export class AppStorage {
 
   async getChore(id: string): Promise<Chore | undefined> {
     const db = await getDB();
-    return db.get('chores', id);
+    const chore = await db.get('chores', id);
+
+    // Normalize dates in case they were stored as strings (from JSON import)
+    if (chore) {
+      return {
+        ...chore,
+        createdAt: chore.createdAt instanceof Date ? chore.createdAt : new Date(chore.createdAt)
+      };
+    }
+
+    return chore;
   }
 
   async createChore(data: InsertChore): Promise<Chore> {
@@ -117,7 +137,14 @@ export class AppStorage {
   async getPayoutsForChild(childId: string): Promise<Payout[]> {
     const db = await getDB();
     const allPayouts = await db.getAll('payouts');
-    return allPayouts.filter(p => p.childId === childId);
+
+    // Normalize dates and filter
+    return allPayouts
+      .filter(p => p.childId === childId)
+      .map((p: Payout) => ({
+        ...p,
+        createdAt: p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt)
+      }));
   }
 
   async createPayout(data: InsertPayout): Promise<Payout> {
