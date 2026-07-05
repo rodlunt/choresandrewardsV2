@@ -31,10 +31,13 @@ export default defineConfig({
     minify: false, // DEBUGGING: Disable to see full React error messages
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor chunks for better caching
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-toast', '@radix-ui/react-checkbox'],
+        manualChunks(id) {
+          // Split vendor chunks for better caching (vite 8 requires the
+          // function form; the object form fails type-check).
+          if (!id.includes('node_modules')) return undefined;
+          if (/node_modules\/react(-dom)?\//.test(id)) return 'react-vendor';
+          if (id.includes('@radix-ui/react-dialog') || id.includes('@radix-ui/react-toast') || id.includes('@radix-ui/react-checkbox')) return 'ui-vendor';
+          return undefined;
         },
       },
     },
