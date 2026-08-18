@@ -1,48 +1,53 @@
 # choresandrewardsV2 Session Handoff Baton
 
-**Date:** 2026-08-18. **Session:** BMC URL sweep, deploy blocked.
+**Date:** 2026-08-19. **Session:** engineering audit, full burndown, deploy automation.
 
 **Branch:** main
 
-**Last commits this session:**
+## Where things stand
 
-- 2ef5d7a Merge pull request #33 from rodlunt/fix/bmac-url
-- ed7383f fix: update Buy Me a Coffee URL to /rodlunt
+Every issue on the repo is CLOSED (the 2026-08-18 engineering audit filed 42; all are
+resolved, 41 in code and one by recorded decision). Do not trust this file for live
+status: check the Actions tab and https://candr.lunt.au directly.
 
----
+## How this repo operates now (changed this session)
 
-## What shipped this session
+- **Branch protection on main**: strict, enforce_admins, three required checks ("Run
+  Pre-Deployment Checks", "Security audit", "Tests"). Everything merges via PR with green
+  checks, batons included. Zero required approvals (solo repo).
+- **CI** is `.github/workflows/ci.yml` (audit and tests are separate jobs; runs on push
+  and pull_request). The test suite is Vitest (storage/schema, fake-indexeddb) plus a
+  Playwright journey; `pnpm test` and `pnpm test:e2e`.
+- **Deploys are poll-based**: `candr-deploy.timer` on opti (script at
+  `/usr/local/lib/candr-deploy/`, NOT the checkout) deploys origin/main within ~5 minutes
+  of a merge, only when that exact commit's required checks are green, then verifies sha,
+  container health and the live URL. There is NO SSH deploy and NO self-hosted runner
+  (deliberate: public repo, fork-PR runs-on risk). See `deploy/README.md`, including the
+  stated gap (nothing watches the timer itself).
+- **Bug reports land in the PRIVATE repo `rodlunt/candr-reports`** (fine-grained PAT
+  `candr-reports-intake`, expires 2026-11-16; `GITHUB_REPO_NAME=candr-reports` in the
+  server `.env`). Reports never go public; sanitised issues are written by hand. Policy
+  docs: `docs/security/`.
+- **Alerting is live**: ntfy (server-alerts topic; burst >10 accepted reports/60m,
+  GitHub-failure one/hour) and GlitchTip (project "Chores and Rewards", org rodlunt, id 2;
+  DSN via docker network name `glitchtip:8000`, which dies silently if glitchtip leaves
+  the shared `web` network). Runbook: `docs/security/alerting-setup.md`.
+- **App changes**: completions ledger (DB v3), parent PIN gating (payout/edit/delete/
+  import; no PIN set = ungated), import confirm + auto-backup + undo-completion,
+  `Payout.childName` dropped (join on childId), private-intake disclosure in the form,
+  maskable PWA icons + full "Chores and Rewards" home-screen name.
 
-- This repo was one stop in an account-wide Buy Me a Coffee sweep (the page moved
-  from /rodluntgithub to /rodlunt). PR #33 updated the URL in
-  `client/src/components/Footer.tsx` and `client/src/components/BuyMeCoffeeBanner.tsx`,
-  merged to main. No README footer was added because the repo has no README, by design
-  of the sweep rules.
-- Context from the wider sweep: seven public repos got README footers, AmIAKnob got the
-  same URL fix and was deployed live on opti, and rod.lunt.au gained a footer coffee
-  glyph plus a per-note support line (rodluntau-home-page PR #98). All merged and
-  verified against live artefacts.
+## Open follow-ups (none are issues)
 
-## Open follow-ups
-
-1. **The merged URL fix is NOT live.** candr.lunt.au still serves the old
-   buymeacoffee.com/rodluntgithub link (inside the built JS bundle,
-   `/assets/index-C33qMOAF.js` at time of writing), and since the BMC rename that
-   live link is presumably dead. LIKELY on the dead-link claim; the old URL was not
-   probed.
-2. **Why:** the "Validate and Deploy to Production" workflow fails at its
-   pre-deployment security audit and has failed on every run since 2026-07-05.
-   `pnpm audit` reports 5 vulnerabilities (4 high, 1 moderate); the headline one is
-   postcss <=8.5.17 (needs >=8.5.18, GHSA-r28c-9q8g-f849) pulled in via
-   tailwindcss/tailwindcss-animate, 19 paths. Fix is a dependency bump PR (branch +
-   PR per house rules), get the gate green, and the deploy then carries the URL fix
-   out with it. Do not bypass the audit gate.
-3. After a successful deploy, verify against the live bundle, not the workflow row:
-   `curl -s https://candr.lunt.au/ | grep -oP 'src="[^"]+\.js"'` then grep that asset
-   for `buymeacoffee.com/rodlunt`.
+1. Another session ("Github Repo Cleanup") was batch-merging ~9 Dependabot PRs to main
+   as this session closed; each lands on prod via the poller. If prod misbehaves, suspect
+   the major bumps (framer-motion, lucide, zod-validation-error) and check with them.
+2. Rodney was asked to remove and re-add the phone home-screen shortcut to pick up the
+   new icon and name (Android caches both at add time).
+3. Watch-the-watcher gap on candr-deploy.timer: a Kuma push heartbeat would close it.
+4. Dependabot cadence (weekly, grouped minors) may deserve retuning if PR volume annoys.
 
 ## Suggested starting point
 
-Bump the vulnerable dependencies (start with `pnpm audit` locally to get the current
-list, then override or update postcss and friends), open a PR, and once the deploy
-gate passes confirm candr.lunt.au serves the new BMC URL.
+Nothing urgent. The queue memory (`project_candr_open_items.md` in the global memory dir)
+mirrors this file's follow-ups.
