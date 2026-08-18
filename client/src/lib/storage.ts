@@ -12,6 +12,17 @@ import { nanoid } from 'nanoid';
 // that surfaces as a second, unhandled promise rejection alongside the
 // error we already threw. This drains it quietly and rethrows the
 // original error, so a failed atomic write reports exactly once.
+// Databases populated by the pre-validation import code can hold createdAt
+// as ISO strings rather than Date objects (the old importData wrote whatever
+// JSON.parse produced). Reads coerce defensively so legacy data cannot crash
+// date arithmetic; newly written and newly imported records are always real
+// Dates.
+function coerceDate<T extends { createdAt: Date | string }>(record: T): T {
+  return record.createdAt instanceof Date
+    ? record
+    : { ...record, createdAt: new Date(record.createdAt) };
+}
+
 async function withTransaction<R>(tx: { done: Promise<void> }, work: () => Promise<R>): Promise<R> {
   try {
     const result = await work();
@@ -27,12 +38,14 @@ export class AppStorage {
   // Children operations
   async getAllChildren(): Promise<Child[]> {
     const db = await getDB();
-    return db.getAll('children');
+    const children = await db.getAll('children');
+    return children.map(coerceDate);
   }
 
   async getChild(id: string): Promise<Child | undefined> {
     const db = await getDB();
-    return db.get('children', id);
+    const child = await db.get('children', id);
+    return child && coerceDate(child);
   }
 
   async createChild(data: InsertChild): Promise<Child> {
@@ -95,12 +108,14 @@ export class AppStorage {
   // Chores operations
   async getAllChores(): Promise<Chore[]> {
     const db = await getDB();
-    return db.getAll('chores');
+    const chores = await db.getAll('chores');
+    return chores.map(coerceDate);
   }
 
   async getChore(id: string): Promise<Chore | undefined> {
     const db = await getDB();
-    return db.get('chores', id);
+    const chore = await db.get('chores', id);
+    return chore && coerceDate(chore);
   }
 
   async createChore(data: InsertChore): Promise<Chore> {
@@ -153,13 +168,15 @@ export class AppStorage {
   async getAllPayouts(): Promise<Payout[]> {
     const db = await getDB();
     const payouts = await db.getAll('payouts');
-    return payouts.sort((a: Payout, b: Payout) => b.createdAt.getTime() - a.createdAt.getTime());
+    return payouts
+      .map(coerceDate)
+      .sort((a: Payout, b: Payout) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getPayoutsForChild(childId: string): Promise<Payout[]> {
     const db = await getDB();
     const allPayouts = await db.getAll('payouts');
-    return allPayouts.filter(p => p.childId === childId);
+    return allPayouts.filter(p => p.childId === childId).map(coerceDate);
   }
 
   async createPayout(data: InsertPayout): Promise<Payout> {
