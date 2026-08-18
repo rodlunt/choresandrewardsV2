@@ -65,3 +65,44 @@ test('add a child, complete a chore, pay out, and see it in history', async ({ p
     `$${(choreValueCents / 100).toFixed(2)}`,
   );
 });
+
+// The happy path above deliberately never sets a PIN, so it also proves the
+// "no PIN set = ungated" default (Pay Out works with no prompt at all).
+// This second journey covers the gated side: once a PIN is set, Pay Out is
+// blocked behind PinPromptDialog until the correct PIN is entered.
+test('setting a parent PIN gates Pay Out until the PIN is entered', async ({ page }) => {
+  await page.goto('/');
+
+  const childName = `Test Child ${Date.now()}`;
+  await page.getByTestId('input-first-child-name').fill(childName);
+  await page.getByTestId('button-add-first-child').click();
+
+  await expect(page.getByTestId('nav-home')).toBeVisible();
+
+  // Set a parent PIN from Settings.
+  await page.getByTestId('nav-settings').click();
+  await page.getByTestId('button-manage-pin').click();
+  await page.getByTestId('input-pin-new').fill('1234');
+  await page.getByTestId('input-pin-confirm').fill('1234');
+  await page.getByTestId('button-save-pin').click();
+  await expect(page.getByTestId('button-manage-pin')).toHaveText('Change or Remove PIN');
+
+  // Complete a chore (left open to kids - no PIN prompt expected) then try
+  // to pay out, which is gated.
+  await page.getByTestId('nav-home').click();
+  await page.locator('[data-testid^="button-view-chores-"]').click();
+  await page.locator('[data-testid^="button-complete-chore-"]').first().click();
+
+  await page.getByTestId('button-payout').click();
+  await expect(page.getByTestId('input-pin-prompt')).toBeVisible();
+
+  // Wrong PIN is rejected with an inline error, not silently let through.
+  await page.getByTestId('input-pin-prompt').fill('9999');
+  await page.getByTestId('button-confirm-pin-prompt').click();
+  await expect(page.getByTestId('text-pin-prompt-error')).toBeVisible();
+
+  // The correct PIN lets the payout dialog through.
+  await page.getByTestId('input-pin-prompt').fill('1234');
+  await page.getByTestId('button-confirm-pin-prompt').click();
+  await expect(page.getByTestId('button-confirm-payout')).toBeVisible();
+});

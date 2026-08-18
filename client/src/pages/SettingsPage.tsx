@@ -1,29 +1,59 @@
 import { useState } from 'react';
-import { useChildren, useSettings, useDeleteChild, useUpdateSettings, useExportData, useImportData } from '@/hooks/use-app-data';
+import { useChildren, useChores, usePayouts, useSettings, useDeleteChild, useUpdateSettings, useExportData, useImportData } from '@/hooks/use-app-data';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
-import { Settings, appDataSchema } from '@shared/schema';
+import PinPromptDialog from '@/components/PinPromptDialog';
+import PinSetupDialog from '@/components/PinSetupDialog';
+import { Settings, appDataSchema, AppData } from '@shared/schema';
 import { formatValue } from '@/lib/format';
-import { Plus, Edit2, Trash2, Download, Upload, Users } from 'lucide-react';
+import { describeImportScope, isDataEmpty, ImportScopeCounts } from '@/lib/import-scope';
+import { Plus, Edit2, Trash2, Download, Upload, Users, Lock } from 'lucide-react';
 
 // Shared with App.tsx's backup reminder check.
 export const LAST_EXPORT_STORAGE_KEY = 'chores-rewards-last-export';
 
+interface PendingImport {
+  data: AppData;
+  // Snapshot of what's about to be replaced, taken at the moment the file
+  // was picked, so the dialog names exactly what it's asking the user to
+  // confirm even if the underlying queries refetch in the background.
+  scope: ImportScopeCounts;
+}
+
 export default function SettingsPage() {
   const [showAddChild, setShowAddChild] = useState(false);
-  
+  // An import ready to run, once the user confirms it will replace what's
+  // currently in the database. Null when there's nothing pending, which
+  // also doubles as the AlertDialog's open/closed state.
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const pinGate = usePinGuard();
+
   const { data: children, isLoading: childrenLoading } = useChildren();
+  const { data: chores } = useChores();
+  const { data: payouts } = usePayouts();
   const { data: settings, isLoading: settingsLoading } = useSettings();
-  
+
   const deleteChild = useDeleteChild();
   const updateSettings = useUpdateSettings();
   const exportData = useExportData();
   const importData = useImportData();
-  
+
   const { toast } = useToast();
 
   const isLoading = childrenLoading || settingsLoading;
@@ -81,21 +111,27 @@ export default function SettingsPage() {
     }
   };
 
+  // Downloads the current database contents as a backup file. Used both by
+  // the explicit "Export Backup" button and, unlabelled by its own toast, as
+  // the automatic pre-import safety net (see handleConfirmImport).
+  const downloadBackup = async (): Promise<void> => {
+    const data = await exportData.mutateAsync();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chores-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    localStorage.setItem(LAST_EXPORT_STORAGE_KEY, String(Date.now()));
+  };
+
   const handleExport = async () => {
     try {
-      const data = await exportData.mutateAsync();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `chores-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      localStorage.setItem(LAST_EXPORT_STORAGE_KEY, String(Date.now()));
-
+      await downloadBackup();
       toast({
         title: "Export Complete",
         description: "Your data has been exported successfully",
@@ -109,11 +145,27 @@ export default function SettingsPage() {
     }
   };
 
+  const runImport = async (data: AppData) => {
+    try {
+      await importData.mutateAsync(data);
+      toast({
+        title: "Import Complete",
+        description: "Your data has been imported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to import data. Please check the file format.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImport = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -141,25 +193,48 @@ export default function SettingsPage() {
         return;
       }
 
-      try {
-        await importData.mutateAsync(result.data);
+      // Importing is destructive: it replaces every child, chore and payout
+      // wholesale (see AppStorage.importData). When there's existing data to
+      // lose, name the scope and hold off writing anything to the database
+      // until the user confirms via the AlertDialog below - which itself
+      // triggers an automatic backup download of what's about to be
+      // replaced before the import proceeds. A genuinely empty database has
+      // nothing to confirm or back up, so that case imports immediately.
+      const currentCounts = {
+        children: children?.length ?? 0,
+        chores: chores?.length ?? 0,
+        payouts: payouts?.length ?? 0,
+      };
 
-        toast({
-          title: "Import Complete",
-          description: "Your data has been imported successfully",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to import data. Please check the file format.",
-          variant: "destructive",
-        });
+      if (isDataEmpty(currentCounts)) {
+        await runImport(result.data);
+        return;
       }
+
+      setPendingImport({ data: result.data, scope: currentCounts });
     };
-    
+
     input.click();
   };
 
+  const handleConfirmImport = async () => {
+    if (!pendingImport) return;
+    const { data } = pendingImport;
+    setPendingImport(null);
+
+    try {
+      await downloadBackup();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Couldn't back up your current data, so the import was cancelled",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await runImport(data);
+  };
 
   if (isLoading) {
     return <LoadingSpinner className="min-h-[50vh]" />;
@@ -210,7 +285,7 @@ export default function SettingsPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteChild(child.id, child.name)}
+                    onClick={() => pinGate.guard(() => handleDeleteChild(child.id, child.name))}
                     className="text-brand-coral/60 hover:text-brand-coral hover:bg-brand-coral/10"
                     aria-label={`Delete ${child.name}`}
                     data-testid={`button-delete-child-${child.id}`}
@@ -284,6 +359,29 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Parent PIN */}
+      <Card className="shadow-soft">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Lock className="w-5 h-5 text-brand-coral" />
+            <h2 className="text-xl font-semibold text-brand-grayDark">Parent PIN</h2>
+          </div>
+          <p className="text-brand-grayDark/60 text-sm mb-4">
+            {settings?.pinHash
+              ? 'A PIN currently guards paying out, editing or deleting a chore, deleting a child and importing a backup.'
+              : 'Set an optional 4-6 digit PIN to guard paying out, editing or deleting a chore, deleting a child and importing a backup. Adding and completing chores always stay open to kids.'}
+          </p>
+          <Button
+            onClick={() => setShowPinSetup(true)}
+            size="sm"
+            className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft"
+            data-testid="button-manage-pin"
+          >
+            {settings?.pinHash ? 'Change or Remove PIN' : 'Set Parent PIN'}
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Data Management */}
       <Card className="shadow-soft">
         <CardContent className="p-6">
@@ -299,7 +397,7 @@ export default function SettingsPage() {
               {exportData.isPending ? 'Exporting...' : 'Export Backup'}
             </Button>
             <Button
-              onClick={handleImport}
+              onClick={() => pinGate.guard(handleImport)}
               disabled={importData.isPending}
               className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-yellow-dark shadow-soft"
               data-testid="button-import-data"
@@ -315,6 +413,33 @@ export default function SettingsPage() {
       </Card>
 
       <AddChildDialog open={showAddChild} onOpenChange={setShowAddChild} />
+
+      <AlertDialog open={!!pendingImport} onOpenChange={(open) => { if (!open) setPendingImport(null); }}>
+        <AlertDialogContent data-testid="dialog-confirm-import">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingImport && describeImportScope(pendingImport.scope)}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This import replaces your current data completely. We'll download a backup of what's
+              currently stored first, in case you need to undo this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-import">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmImport}
+              className="bg-brand-coral hover:bg-brand-coral/90"
+              data-testid="button-confirm-import"
+            >
+              Back Up &amp; Replace
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <PinSetupDialog open={showPinSetup} onOpenChange={setShowPinSetup} />
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }
