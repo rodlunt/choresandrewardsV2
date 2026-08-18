@@ -9,20 +9,25 @@ Caddy fronts the container and Cloudflare sits in front of Caddy, serving the ap
 
 ## CI
 
-`.github/workflows/validate-and-deploy.yml` runs on every push to `main` and on pull
-requests (gates only):
+`.github/workflows/ci.yml` runs on every push to `main` and on pull requests:
 
 1. **Security audit** (own job): `pnpm audit --audit-level=high`.
 2. **validate**: `pnpm install --frozen-lockfile`, `pnpm run check` (tsc), `pnpm run build`.
-3. **deploy** (push to main only, `production` environment): SSHes to the server and runs
-   `docker-compose build && docker-compose up -d`. Both gate jobs are required status checks
-   on `main`.
 
-The deploy job runs on a GitHub-hosted runner, which cannot reach a tailnet-only host. It
-currently fails at the SSH step on every run. Issue #29 tracks moving this to a self-hosted
-runner on the tailnet so deploy can work again.
+Both jobs are required status checks on `main`. CI does not deploy: a GitHub-hosted runner
+cannot reach the tailnet-only server, and a self-hosted runner on a public repository is a
+documented risk. Deployment is pull-based instead: see below and `deploy/README.md`.
 
-## Manual deploy (current, until #29 lands)
+## Automated deploy (poll-based)
+
+A systemd timer on the server (`candr-deploy.timer`, every 5 minutes) checks whether
+`origin/main` is ahead of the local checkout, verifies that commit's required CI checks
+concluded green via the public checks API, then pulls, rebuilds and restarts the stack,
+verifying the checkout sha, container health and the live URL. Failures alert via ntfy;
+holds (CI pending or API unreachable) never deploy. Install and failure behaviour:
+`deploy/README.md`. Merged PRs reach candr.lunt.au within about 5 minutes.
+
+## Manual deploy (fallback)
 
 ```bash
 ssh <server>
