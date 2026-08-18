@@ -56,7 +56,7 @@ This application works completely offline and respects your privacy.`;
               Privacy Policy
             </button>
             <a
-              href="https://buymeacoffee.com/rodluntgithub"
+              href="https://buymeacoffee.com/rodlunt"
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleCoffeeClick}
