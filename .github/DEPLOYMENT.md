@@ -1,252 +1,46 @@
-# GitHub Actions Auto-Deployment Setup
+# Deployment
 
-This repository is configured for automatic deployment to your production server on every push to the `main` branch.
+## Hosting
 
-## 🚀 How It Works
+The app runs as a Docker Compose stack on the owner's Linux home server, reachable only over
+Tailscale (tailnet-only, no public SSH). Deploy path on the server: `/srv/prod/ChoresandRewards`.
+Caddy fronts the container and Cloudflare sits in front of Caddy, serving the app at
+`candr.lunt.au`.
 
-1. Push code to `main` branch
-2. GitHub Actions triggers automatically
-3. Connects to your server via SSH (port 2223)
-4. Pulls latest changes from GitHub
-5. Runs `docker-compose down` to stop containers
-6. Runs `docker-compose up -d --build` to rebuild and restart
-7. Displays container status
+## CI
 
-## 🔧 Setup Instructions
+`.github/workflows/validate-and-deploy.yml` runs on every push to `main`:
 
-### Option A: Using Existing GitHub Deploy Key ✅ (Recommended)
+1. **validate**: `pnpm install --frozen-lockfile`, `pnpm audit --audit-level=high`,
+   `pnpm run check` (tsc), `pnpm run build`.
+2. **deploy**: SSHes to the server and runs `docker-compose build && docker-compose up -d`.
 
-If you already have a GitHub deploy key set up:
+The deploy job runs on a GitHub-hosted runner, which cannot reach a tailnet-only host. It
+currently fails at the SSH step on every run. Issue #29 tracks moving this to a self-hosted
+runner on the tailnet so deploy can work again.
 
-1. **Locate your existing private key** on your local machine or server
-2. Copy the **private key content** (usually in `~/.ssh/id_ed25519` or `~/.ssh/id_rsa`)
-3. Skip to **Step 2: Configure GitHub Secrets** below
-
-### Option B: Generate New SSH Key (Alternative)
-
-If you want a dedicated key for GitHub Actions:
-
-On your local machine:
-```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_actions_deploy
-```
-
-This creates two files:
-- `~/.ssh/github_actions_deploy` (private key)
-- `~/.ssh/github_actions_deploy.pub` (public key)
-
-Copy the public key to your server:
-```bash
-ssh-copy-id -i ~/.ssh/github_actions_deploy.pub user@homeserver
-```
-
-Or manually add it to `~/.ssh/authorized_keys` on the server.
-
----
-
-### Step 2: Configure GitHub Secrets
-
-Go to your GitHub repository:
-1. Navigate to **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret** for each:
-
-#### Required Secrets (Already Configured):
-
-| Secret Name | Description | Current Value (Example) |
-|------------|-------------|---------|
-| `SERVER_HOST` | Your server hostname or IP | `180.181.214.90` |
-| `SERVER_USERNAME` | SSH username | `user` |
-| `SSH_PRIVATE_KEY` | Private SSH key content | (existing deploy key) |
-| `DEPLOY_PATH` | Deployment directory on server | `E:/Prod/ChoresandRewards` |
-| `SERVER_PORT` | SSH port | `2223` |
-
-### 4. Deployment Script (Already Configured)
-
-The deployment script in `.github/workflows/deploy.yml` is already configured for Docker Compose:
-
-```yaml
-script: |
-  cd ${{ secrets.DEPLOY_PATH }}
-  git pull origin main
-  docker-compose down
-  docker-compose up -d --build
-  docker-compose ps
-```
-
-No changes needed unless you want to customize the deployment process.
-
-## 📋 Server Requirements
-
-Your server must have:
-- [x] Git installed ✅
-- [x] Docker installed ✅
-- [x] Docker Compose installed ✅
-- [x] SSH access enabled (port 2223) ✅
-- [x] Git repository cloned at `DEPLOY_PATH` ✅
-- [x] Appropriate permissions for deployment user ✅
-- [x] `web` Docker network created ✅
-
-## 🧪 Testing the Deployment
-
-### Manual Test via GitHub UI:
-1. Go to **Actions** tab in GitHub
-2. Click **Deploy to Production**
-3. Click **Run workflow** button
-4. Select `main` branch
-5. Click **Run workflow**
-
-### Monitor Deployment:
-1. Go to **Actions** tab
-2. Click on the running workflow
-3. Watch the deployment logs in real-time
-
-## 🔒 Security Best Practices
-
-1. **Never commit private keys** to the repository
-2. **Use dedicated SSH keys** for GitHub Actions (not your personal key)
-3. **Limit SSH key permissions** on the server (use `authorized_keys` restrictions)
-4. **Use environment-specific secrets** for sensitive data
-5. **Review deployment logs** regularly
-
-## 🛠️ Troubleshooting
-
-### Deployment Fails: Permission Denied
-
-**Issue**: SSH connection fails
-**Solution**:
-```bash
-# On server, check SSH key permissions:
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys
-
-# Ensure GitHub Actions key is in authorized_keys
-cat ~/.ssh/authorized_keys | grep "github-actions"
-```
-
-### Deployment Fails: npm install Error
-
-**Issue**: Dependencies fail to install
-**Solution**:
-```bash
-# On server, try manual install:
-cd /path/to/deploy
-npm install --verbose
-
-# Check Node.js version:
-node --version  # Should be v18+
-```
-
-### Deployment Fails: Build Error
-
-**Issue**: `npm run build` fails
-**Solution**:
-```bash
-# Check if all dependencies are installed:
-npm ls
-
-# Try building manually:
-npm run build
-```
-
-### Git Pull Fails: Uncommitted Changes
-
-**Issue**: Server has uncommitted changes
-**Solution**:
-```bash
-# On server:
-cd /path/to/deploy
-git status
-
-# Either commit changes:
-git add . && git commit -m "server changes"
-
-# Or discard changes (be careful!):
-git reset --hard origin/main
-```
-
-## 🔄 Rollback Procedure
-
-If a deployment breaks production:
+## Manual deploy (current, until #29 lands)
 
 ```bash
-# SSH into server
-ssh user@homeserver
-
-# Navigate to deployment directory
-cd /path/to/deploy
-
-# Check recent commits
-git log --oneline -5
-
-# Rollback to previous commit
-git reset --hard <previous-commit-hash>
-
-# Reinstall dependencies
-npm install
-
-# Rebuild
-npm run build
-
-# Restart service
-# (use your restart command)
+ssh <server>
+cd /srv/prod/ChoresandRewards
+git pull --ff-only
+docker compose build
+docker compose up -d
 ```
 
-## 📊 Monitoring
+## Status
 
-After each deployment, verify:
-- [x] Application is running
-- [x] No errors in logs
-- [x] Database connectivity
-- [x] All routes working
-- [x] Frontend loads correctly
+Check the Actions tab for the last validate/deploy run, and check the live site at
+`candr.lunt.au` directly. Neither is asserted here, both go stale the moment this file isn't
+updated.
 
-## 🎯 Advanced Configuration
+## Recovery
 
-### Deploy Only on Tagged Releases
-
-Modify `.github/workflows/deploy.yml`:
-```yaml
-on:
-  push:
-    tags:
-      - 'v*'  # Deploy on version tags (v1.0.0, v2.1.3, etc.)
+```bash
+cd /srv/prod/ChoresandRewards
+git log --oneline -10        # pick a known-good sha
+git checkout <known-good-sha>
+docker compose build
+docker compose up -d
 ```
-
-### Deploy to Multiple Environments
-
-Create separate workflows:
-- `.github/workflows/deploy-staging.yml` (deploys to staging server)
-- `.github/workflows/deploy-production.yml` (deploys to production)
-
-### Add Slack/Discord Notifications
-
-Add notification step to workflow:
-```yaml
-- name: Notify Slack
-  uses: 8398a7/action-slack@v3
-  with:
-    status: ${{ job.status }}
-    webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-```
-
-## 📝 Workflow Status Badge
-
-Add this badge to your README.md:
-```markdown
-![Deploy Status](https://github.com/rodlunt/choresandrewardsV2/actions/workflows/deploy.yml/badge.svg)
-```
-
-## 🆘 Support
-
-If you encounter issues:
-1. Check the Actions logs in GitHub
-2. Verify all secrets are correctly configured
-3. Test SSH connection manually: `ssh user@homeserver`
-4. Check server logs for application errors
-
----
-
-**Status**: ✅ Fully Operational - Deployment working perfectly
-**Last Updated**: 2025-10-19
-**Workflow File**: `.github/workflows/deploy.yml`
-**Production URL**: https://www.choresandrewards.app
