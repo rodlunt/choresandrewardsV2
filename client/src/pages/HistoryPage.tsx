@@ -1,4 +1,4 @@
-import { usePayouts, useSettings } from '@/hooks/use-app-data';
+import { usePayouts, useChildren, useSettings } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatValue } from '@/lib/format';
@@ -6,8 +6,18 @@ import { CheckCircle, History } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HistoryPage() {
-  const { data: payouts, isLoading } = usePayouts();
+  const { data: payouts, isLoading: payoutsLoading } = usePayouts();
+  // Payouts no longer carry a childName snapshot (see shared/schema.ts):
+  // the display name is resolved here by joining on childId. A payout
+  // whose child no longer exists can't occur in practice, since
+  // AppStorage.deleteChild cascades a child's payouts, but "Unknown" is
+  // kept as a defensive fallback for odd/legacy imported data.
+  const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: settings } = useSettings();
+  const isLoading = payoutsLoading || childrenLoading;
+
+  const childNameById = new Map((children || []).map((child) => [child.id, child.name]));
+  const getPayoutChildName = (childId: string) => childNameById.get(childId) ?? 'Unknown';
 
   const formatValueDisplay = (cents: number) => {
     return formatValue(cents, settings?.displayMode);
@@ -56,19 +66,21 @@ export default function HistoryPage() {
 
       {/* Payout History List */}
       <div className="space-y-4">
-        {payouts?.map((payout, index) => (
+        {payouts?.map((payout, index) => {
+          const payoutChildName = getPayoutChildName(payout.childId);
+          return (
           <Card key={payout.id} className="shadow-soft" data-testid={`card-payout-${payout.id}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 bg-gradient-to-br ${getGradientClass(index)} rounded-lg flex items-center justify-center`}>
                     <span className="text-white font-bold text-sm" data-testid={`text-payout-initials-${payout.id}`}>
-                      {getChildInitials(payout.childName)}
+                      {getChildInitials(payoutChildName)}
                     </span>
                   </div>
                   <div>
                     <h3 className="font-medium text-brand-grayDark" data-testid={`text-payout-child-${payout.id}`}>
-                      {payout.childName}
+                      {payoutChildName}
                     </h3>
                     <p className="text-brand-grayDark/60 text-sm" data-testid={`text-payout-date-${payout.id}`}>
                       {formatDate(payout.createdAt)}
@@ -87,7 +99,8 @@ export default function HistoryPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Empty State */}

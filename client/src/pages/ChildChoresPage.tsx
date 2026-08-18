@@ -66,7 +66,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     if (!child) return;
 
     try {
-      await completeChore.mutateAsync({ childId: child.id, choreValueCents });
+      await completeChore.mutateAsync({ childId: child.id, choreId, choreTitle, choreValueCents });
       await choreFeedback();
 
       toast({

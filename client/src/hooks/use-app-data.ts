@@ -31,6 +31,13 @@ export function usePayouts() {
   });
 }
 
+export function useCompletions() {
+  return useQuery({
+    queryKey: ['completions'],
+    queryFn: () => storage.getAllCompletions(),
+  });
+}
+
 export function useSettings() {
   return useQuery({
     queryKey: ['settings'],
@@ -109,12 +116,13 @@ export function useDeleteChore() {
 
 export function useCompleteChore() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ childId, choreValueCents }: { childId: string; choreValueCents: number }) => 
-      storage.completeChore(childId, choreValueCents),
+    mutationFn: ({ childId, choreId, choreTitle, choreValueCents }: { childId: string; choreId: string; choreTitle: string; choreValueCents: number }) =>
+      storage.completeChore(childId, choreId, choreTitle, choreValueCents),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['completions'] });
     },
   });
 }

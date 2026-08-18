@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { Child, Chore, Payout, Settings } from '@shared/schema';
+import { Child, Chore, Payout, Completion, Settings } from '@shared/schema';
 import { nanoid } from 'nanoid';
 
 interface ChoresDB extends DBSchema {
@@ -14,6 +14,10 @@ interface ChoresDB extends DBSchema {
   payouts: {
     key: string;
     value: Payout;
+  };
+  completions: {
+    key: string;
+    value: Completion;
   };
   settings: {
     key: string;
@@ -34,7 +38,7 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
   }
 
   dbPromise = (async () => {
-    const db = await openDB<ChoresDB>('chores-rewards-db', 2, {
+    const db = await openDB<ChoresDB>('chores-rewards-db', 3, {
       upgrade(db, oldVersion) {
         // Children store
         if (!db.objectStoreNames.contains('children')) {
@@ -49,6 +53,15 @@ export async function getDB(): Promise<IDBPDatabase<ChoresDB>> {
         // Payouts store
         if (!db.objectStoreNames.contains('payouts')) {
           db.createObjectStore('payouts', { keyPath: 'id' });
+        }
+
+        // Completions store (added in v3): one row per chore completion, so
+        // "N done" counts can be derived instead of estimated. The contains()
+        // guard means an existing v1/v2 database only gains this store; the
+        // children/chores/payouts/settings stores it already has are left
+        // untouched and their data survives the upgrade.
+        if (!db.objectStoreNames.contains('completions')) {
+          db.createObjectStore('completions', { keyPath: 'id' });
         }
 
         // Settings store
