@@ -24,6 +24,11 @@ deployment-instructions.md
 .vscode
 .idea
 
+# Claude Code / engineering-audit tooling: never needed in the image
+.claude
+audit-output
+docs
+
 # OS
 .DS_Store
 Thumbs.db
