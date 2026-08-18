@@ -217,13 +217,16 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
           branch: screenshotBranch,
         });
 
-        // Add comment with screenshot to the issue
-        const screenshotUrl = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${screenshotBranch}/${filePath}`;
+        // Link the screenshot into the issue. The blob URL works for
+        // authenticated repo members even on a private repository, unlike
+        // raw.githubusercontent.com, which GitHub's image proxy cannot
+        // fetch for private repos (the inline embed would render broken).
+        const screenshotUrl = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/blob/${screenshotBranch}/${filePath}`;
         await octokit.issues.createComment({
           owner: GITHUB_REPO_OWNER,
           repo: GITHUB_REPO_NAME,
           issue_number: issueNumber,
-          body: `**Screenshot**:\n\n![Screenshot](${screenshotUrl})`,
+          body: `**Screenshot**: ${screenshotUrl}`,
         });
 
         console.log(`Uploaded screenshot for issue #${issueNumber}`);

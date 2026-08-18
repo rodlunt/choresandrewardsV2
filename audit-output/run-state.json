@@ -1,0 +1,2138 @@
+{
+  "schema_version": 5,
+  "meta": {
+    "tool_version": "0.14.0",
+    "tool_commit": "e7c785e8a4557fadd99bc060f12528309805b669",
+    "rules_pack_name": "domains",
+    "rules_pack_version": "v0.6.1+21",
+    "rules_pack_commit": "fcb3db4f83387e6c857179afdc31a65709634e15",
+    "rules_pack_format": 2,
+    "rules_pack_requires_tool": "0.6.0",
+    "update_check": "current (v0.14.0)",
+    "pack_update_check": "current (ahead of v0.6.1, matches main)",
+    "assistant": "claude-code",
+    "model": "claude-fable-5",
+    "earlier_contributors": [],
+    "repo_name": "choresandrewardsV2",
+    "repo_commit": "20c85faa0f4fcdcb8548e0a217b31f1f40ba9568",
+    "started": "2026-08-18T20:28:30+10:00",
+    "finished": "2026-08-18T21:00:30+10:00",
+    "server_started": "2026-08-18T10:28:44Z",
+    "server_finished": "2026-08-18T11:03:48Z",
+    "environment": {
+      "os": "Linux 6.17.0-1025-oem",
+      "host_cli": "claude-code",
+      "host_cli_version": "2.1.234 (Claude Code)"
+    }
+  },
+  "config": {
+    "selected_domain_ids": [
+      "d01",
+      "d02",
+      "d03",
+      "d04",
+      "d05",
+      "d06",
+      "d07",
+      "d08",
+      "d09",
+      "d10",
+      "d11",
+      "d12",
+      "d13",
+      "d14",
+      "d15",
+      "d16"
+    ],
+    "issue_mode": "github",
+    "feedback_text": null,
+    "telemetry_consent": {
+      "coverage": true,
+      "rollup": true,
+      "self_assessment": true,
+      "environment": true,
+      "consulted_sources": true,
+      "verdict_distribution": true,
+      "duration": true,
+      "rules_fetched": true,
+      "reader_conclusions": true
+    },
+    "deliverables_dir": null
+  },
+  "domain_results": {
+    "d01": {
+      "domain_id": "d01",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D01-R01",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a fact that could be modelled as two binaries or one ternary; this model has four flat entity types (Child, Chore, Payout, Settings) with no ternary candidates."
+        },
+        {
+          "rule_id": "D01-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R04",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R05",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R07",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a subtype hierarchy; this model has no subtyping at all."
+        },
+        {
+          "rule_id": "D01-R09",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R11",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R12",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R13",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R14",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D01-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a shared database with a grant surface; the only store is per-origin browser IndexedDB with a single implicit user, and the server holds no database."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D01-R01",
+          "severity": "medium",
+          "title": "Chore completions are never modelled; the UI fabricates completion counts from cents",
+          "location": "client/src/pages/HomePage.tsx:78",
+          "body_md": "The elementary fact \"child completed chore X at time T\" is never recorded anywhere: completing a chore only increments `Child.totalCents`. Because the fact is missing, `HomePage.tsx:78` and `TotalsPage.tsx:77` invent a count with `Math.floor(child.totalCents / 100)` (commented \"Rough estimate\") and display it as \"N done\" / \"N chores completed\". Any chore not valued at exactly 100 cents makes the displayed count wrong. Model a Completion record (childId, choreId, valueCents, createdAt) or stop displaying a count the data cannot support.",
+          "issue_title": "Chore completions are not stored, so displayed completion counts are fabricated",
+          "issue_body": "The data model records only an aggregate `Child.totalCents`; individual chore completions are never persisted. `client/src/pages/HomePage.tsx:78` and `client/src/pages/TotalsPage.tsx:77` therefore estimate \"chores completed\" as `Math.floor(totalCents / 100)`, which is wrong for any chore not worth exactly $1 (the seeded list includes $5 chores). Users see completion counts that do not match reality, and no history view of completions is possible. Either add a completions store (childId, choreId, valueCents, createdAt) and derive counts from it, or remove the fabricated \"N done\" / \"N chores completed\" figures from the UI.",
+          "precondition": "The rule presumes a data model under design; the model lives at `shared/schema.ts` and is persisted via `client/src/lib/db.ts`."
+        },
+        {
+          "rule_id": "D01-R05",
+          "severity": "low",
+          "title": "No uniqueness beyond surrogate ids; duplicate children and chores are freely representable",
+          "location": "client/src/lib/db.ts:40-47",
+          "body_md": "Every store's only key is a generated nanoid; nothing asserts what makes a row one thing. Two children with the same name, or two chores with the same title and value, are freely representable and indistinguishable in the UI (cards show initials and name only). A duplicate submission creates a second identical child with its own balance. Add an application-level uniqueness check on child name (and optionally chore title) at creation time, since IndexedDB cannot express the constraint declaratively on a non-key field without an index.",
+          "issue_title": "Nothing prevents duplicate child names or duplicate chores",
+          "issue_body": "All IndexedDB stores (`client/src/lib/db.ts:40-57`) are keyed only by a generated nanoid, and no write path checks natural uniqueness. Adding a child with an existing name silently creates a second, indistinguishable child with its own separate balance, which reads as a data bug to the user. Add a case-insensitive duplicate-name check in `AppStorage.createChild` (and consider the same for chore titles), surfacing a clear error in `AddChildDialog`.",
+          "precondition": "The rule presumes fact types with keys; the IndexedDB stores at `client/src/lib/db.ts:40-57` are keyed only by generated `id`."
+        },
+        {
+          "rule_id": "D01-R07",
+          "severity": "medium",
+          "title": "Zod value constraints exist but guard no write path; import writes unvalidated JSON",
+          "location": "client/src/pages/SettingsPage.tsx:117-120",
+          "body_md": "The bounds written in `shared/schema.ts` (non-negative integer cents, minimum chore value) are never enforced at a write path: `AddChildDialog` and `AddChoreDialog` do their own ad hoc checks, and the import path (`SettingsPage.tsx:117-120`) does `JSON.parse` then `importData(data)` with no `appDataSchema.parse` at all, so any malformed or hostile backup file is written straight into IndexedDB. A backup with `totalCents: -500`, string cents, or missing fields corrupts the store and breaks pages that assume the schema. Parse imports with `appDataSchema` before writing, and route dialog validation through the insert schemas.",
+          "issue_title": "Backup import bypasses schema validation and can write malformed data",
+          "issue_body": "`client/src/pages/SettingsPage.tsx:117-120` reads the chosen backup file, calls `JSON.parse`, and hands the result directly to `AppStorage.importData`, which writes it into IndexedDB without validating against `appDataSchema` (`shared/schema.ts:65-71`). The Zod bounds on `totalCents` and `valueCents` therefore guard nothing: a malformed or edited backup can set negative balances, non-integer cents, or drop required fields, corrupting the store and crashing pages that assume the shape. Validate with `appDataSchema.safeParse` before importing and reject the file with a clear error when it fails.",
+          "precondition": "The rule presumes domain-bounded values; `shared/schema.ts:7` bounds `totalCents` at `int().min(0)` and `shared/schema.ts:26` bounds `valueCents` at `min(1)`."
+        },
+        {
+          "rule_id": "D01-R10",
+          "severity": "low",
+          "title": "Payout rows duplicate the child's name with no invalidation story",
+          "location": "shared/schema.ts:42",
+          "body_md": "`Payout.childName` depends on `childId`, not on the payout key: a classic transitive dependency stored without a recorded decision. Today there is no rename path so it cannot drift, but the schema permits drift the moment one is added, and the duplication serves no purpose because deleting a child also deletes their payouts (`client/src/lib/storage.ts:57-67`), so the snapshot never outlives the child it snapshots. Either drop `childName` and join on `childId` at display time, or record the snapshot as a deliberate denormalisation and keep payouts when a child is deleted so the snapshot has a reason to exist.",
+          "issue_title": "Payout.childName duplicates child data and the duplication serves no purpose",
+          "issue_body": "`shared/schema.ts:42` stores `childName` on every payout alongside `childId`. Duplicating the name only makes sense as a snapshot that survives the child, but `AppStorage.deleteChild` (`client/src/lib/storage.ts:57-67`) deletes all of a child's payouts with them, so the snapshot never outlives its source; meanwhile any future rename feature will silently desynchronise history from the child list. Either resolve the name via `childId` at display time, or keep payout history on child deletion so the snapshot is doing real work, and note the choice in the schema.",
+          "precondition": "The rule presumes non-key attributes mapped to storage; `payoutSchema` at `shared/schema.ts:39-45` stores both `childId` and `childName`."
+        },
+        {
+          "rule_id": "D01-R13",
+          "severity": "low",
+          "title": "Deleting a chore leaves dangling ids in every child's favourites list",
+          "location": "client/src/lib/storage.ts:118-121",
+          "body_md": "`AppStorage.deleteChore` deletes the chore row but never removes its id from any child's `favoriteChoreIds`, so favourites accumulate references to chores that no longer exist. Display code tolerates it (favourites are computed by filtering live chores), but the dangling ids grow without bound and any future consumer that trusts the list gets phantom favourites. When deleting a chore, sweep all children and strip the id from `favoriteChoreIds` in the same operation.",
+          "issue_title": "deleteChore does not clean up favoriteChoreIds references",
+          "issue_body": "`client/src/lib/storage.ts:118-121` deletes a chore without removing its id from children's `favoriteChoreIds` arrays, unlike `deleteChild`, which does clean up its dependent payouts. The dangling ids are currently masked because favourites are computed by filtering live chores, but they accumulate indefinitely and will surface as phantom favourites in any code that reads the list directly. In `deleteChore`, load all children and strip the deleted id from each `favoriteChoreIds` before completing.",
+          "precondition": "The rule presumes relationships wired in code; `Child.favoriteChoreIds` (`shared/schema.ts:8`) references chore ids, and chores are deletable at `client/src/lib/storage.ts:118-121`."
+        },
+        {
+          "rule_id": "D01-R14",
+          "severity": "high",
+          "title": "Multi-step writes are not transactional; a failed import destroys all existing data",
+          "location": "client/src/lib/storage.ts:202-232",
+          "body_md": "`importData` clears `children`, `chores` and `payouts` in separate auto-committed transactions, then re-adds rows in yet more transactions: any failure after the clears (malformed row, quota error, tab close) leaves the user with their old data destroyed and the import partial, with no rollback. `payoutChild` creates the payout record and zeroes the balance as two separate transactions, so an interruption between them records a payout while leaving the balance intact, inviting a double payout. `completeChore` is an unguarded read-modify-write on `totalCents`. IndexedDB supports a single `readwrite` transaction spanning multiple stores; wrap each of these operations in one.",
+          "issue_title": "importData and payoutChild are not atomic; mid-operation failure corrupts or destroys data",
+          "issue_body": "In `client/src/lib/storage.ts`, `importData` (:202-232) clears three IndexedDB stores and repopulates them across many separate auto-committed transactions, so a failure after the clears (bad row, quota, tab close) permanently destroys the user's existing data with the import only partially applied. `payoutChild` (:246-265) creates the payout row and zeroes `totalCents` in two separate transactions, so an interruption can record a payout without resetting the balance, and `completeChore` (:235-244) is an unguarded read-modify-write. IndexedDB allows one `readwrite` transaction over multiple stores: perform each of these operations inside a single transaction so they commit or roll back as one.",
+          "precondition": "The rule presumes writes touching more than one store; `importData` (`client/src/lib/storage.ts:202-232`) clears and repopulates three stores, and `payoutChild` (`:246-265`) writes payouts then children."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "Verdicts are from static reading; IndexedDB runtime behaviour (transaction interleaving, upgrade paths) was not exercised in a browser."
+      },
+      "coverage": {
+        "files_inspected": 31,
+        "files_skipped": 99,
+        "note": "Skipped: 46 stock shadcn/ui components under client/src/components/ui/, image assets, and lockfile. Inspected all schema, storage, hook, page and server files plus workflows and docs."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "GitHub Issues (closed): DEPLOYMENT_STATUS.md:17-27 and TODO.md reference closed issues #1-#10 as the record of past fixes; only the two open issues and issue #29's body were read.",
+        "Production server state: .github/DEPLOYMENT.md and nextsession.md point at the live deployment on opti; the deployed container and its data were not inspected."
+      ]
+    },
+    "d02": {
+      "domain_id": "d02",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D02-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an active requirements-definition effort with acceptance handover; development here is reactive maintenance driven by user bug reports, with no requirements-definition activity in the repository."
+        },
+        {
+          "rule_id": "D02-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R04",
+          "verdict": "could-not-evaluate",
+          "note": "Nothing in the repository records whether comparable chore-tracker systems were studied before building; there are no elicitation or design artefacts to check either way."
+        },
+        {
+          "rule_id": "D02-R05",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R06",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a requirements specification whose scope can be stated; no specification document exists in this repository."
+        },
+        {
+          "rule_id": "D02-R08",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a system specification under construction; there is none, and the deployment/operations side is documented separately rather than specified as requirements."
+        },
+        {
+          "rule_id": "D02-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R11",
+          "verdict": "could-not-evaluate",
+          "note": "There is no elicited requirements baseline to compare the built system against, so imported extras cannot be distinguished from elicited scope."
+        },
+        {
+          "rule_id": "D02-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a requirements register to attach verification to; no requirements register exists."
+        },
+        {
+          "rule_id": "D02-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes user stories being sized and scheduled; the backlog consists of bug reports and ops tasks, not stories."
+        },
+        {
+          "rule_id": "D02-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes user stories; none exist in this repository or its issue tracker."
+        },
+        {
+          "rule_id": "D02-R15",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D02-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes acceptance criteria to convert into scenarios; no acceptance criteria exist (see D02-R15)."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D02-R06",
+          "severity": "medium",
+          "title": "Two real user tiers (parent and child) are collapsed into one all-powerful user",
+          "location": "client/src/pages/ChildChoresPage.tsx:297-322",
+          "body_md": "The app has exactly one capability level: whoever holds the device can complete chores, edit chore values, delete children, and pay out. The child-facing chore page (`ChildChoresPage.tsx:297-322`) exposes the payout flow and chore editing alongside the Complete button a child is meant to tap, so a child can raise their own chore values or pay themselves out. \"The user\" was never tiered into parent and child, and every requirement inherited the parent's capability. Decide which actions are parent-only (payout, delete, value edits) and gate them, even with something as light as a parent PIN.",
+          "issue_title": "No parent/child capability split: children can edit values and trigger payouts",
+          "issue_body": "The app treats every operator identically. On the child's own chore page (`client/src/pages/ChildChoresPage.tsx:297-322`) the payout card, chore editing and chore deletion sit next to the Complete button a child uses, and Settings allows deleting children entirely. In a family chore tracker the natural tiers are parent (manage children, values, payouts) and child (complete chores), and collapsing them means a child with the device can inflate values or pay themselves out. Gate destructive and money-adjacent actions behind a lightweight parent check such as a PIN, and keep the child view to completing chores.",
+          "precondition": "The rule presumes multiple user tiers; the product is a family chore tracker (client/index.html:7) whose flows are operated both by parents (payouts, settings) and by children (completing chores on their own page)."
+        },
+        {
+          "rule_id": "D02-R10",
+          "severity": "high",
+          "title": "No privacy requirement exists, and bug reports publish user screenshots to a public repository",
+          "location": "server/routes/issues.ts:150-166",
+          "body_md": "Privacy was never specified anywhere, and the consequence is concrete: the in-app bug report captures a full-page screenshot (which shows children's names and balances), then `server/routes/issues.ts:150-166` commits it to the `bug-report-screenshots` branch of the public `rodlunt/choresandrewardsV2` repository and links the raw URL into a public GitHub issue, along with the reporter's user agent, screen resolution and current URL. The form never tells the user any of this will be public. Make the screenshot store private (private repo or object store), state in the form what will be published, and strip or generalise the technical metadata.",
+          "issue_title": "Bug-report screenshots containing family data are published to a public GitHub repo",
+          "issue_body": "The bug-report dialog captures a screenshot of the whole page, which for this app typically shows children's names and balances. `server/routes/issues.ts:150-166` then uploads that image to the public `rodlunt/choresandrewardsV2` repository on the `bug-report-screenshots` branch and posts the raw githubusercontent URL into a public issue, together with the reporter's user agent, resolution and page URL (`:92-99`). Nothing in the form (`client/src/components/BugReport.tsx`) warns that the report and image become public. Move screenshots to private storage, add a clear public-disclosure notice to the form, and reduce the technical metadata to what is actually needed.",
+          "precondition": "The rule presumes personal data is handled; the app stores children's names and balances (shared/schema.ts:4-10) and the bug-report flow transmits screenshots and browser details off-device (client/src/components/BugReport.tsx:98-137)."
+        },
+        {
+          "rule_id": "D02-R15",
+          "severity": "low",
+          "title": "Backlog items carry no testable definition of done",
+          "location": "TODO.md:10-39",
+          "body_md": "Backlog entries in `TODO.md` and the open issues state problems and priorities but never what observable outcome closes them. The cost has already shown up: status claims like \"All workflows passing\" (`TODO.md:80-85`) stood while the deploy pipeline had been failing since July, because \"done\" was never pinned to a checkable outcome. Add a one-line acceptance check to each backlog item (for the deploy fix: \"`candr.lunt.au` serves the new bundle\"), so completion is verified against the artefact rather than declared.",
+          "issue_title": "Backlog items lack acceptance checks, so 'done' drifts from reality",
+          "issue_body": "Items in `TODO.md:10-39` and the open GitHub issues describe problems and priority but no observable completion criterion. The repository already shows the failure this invites: `TODO.md:80-85` asserts all workflows pass and `DEPLOYMENT_STATUS.md` says the app is live and updated, while the validate-and-deploy workflow has failed on every run since 2026-07-05. Give each backlog item a one-line testable acceptance check (command plus expected output, or the live artefact to verify) and update status lines only from that check.",
+          "precondition": "The rule presumes work being planned for later acceptance; TODO.md:10-39 and the open GitHub issues are that backlog."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "medium",
+        "limits": "Several verdicts rest on absence of requirements artefacts in the repo; closed GitHub issues (the historical backlog) were not read and could contain acceptance criteria or elicitation records that would change R04/R11/R15."
+      },
+      "coverage": {
+        "files_inspected": 33,
+        "files_skipped": 97,
+        "note": "Skipped stock shadcn/ui components and image assets. Requirements-relevant artefacts read: TODO.md, VALIDATION.md, BUG_REPORT.md (head), DEPLOYMENT docs, .claude/claude.md, open GitHub issues, the bug-report intake feature, and all page components."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "GitHub Issues (closed): DEPLOYMENT_STATUS.md:17-27 references closed issues #1-#10 as the record of past requirements/fix decisions; only the two open issues were read.",
+        "The live app at candr.lunt.au and its predecessor domain: user-facing behaviour was assessed from source, not from the deployed product."
+      ]
+    },
+    "d03": {
+      "domain_id": "d03",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D03-R01",
+          "verdict": "not-applicable",
+          "note": "The rule presumes modelling activity (choosing diagrams to draw); this repository contains no diagrams or models and none are being planned."
+        },
+        {
+          "rule_id": "D03-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes diagram-type selection is happening; no diagrams exist in the repository."
+        },
+        {
+          "rule_id": "D03-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a diagram being scoped; no diagrams exist."
+        },
+        {
+          "rule_id": "D03-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes modelled actions to trace; no models exist."
+        },
+        {
+          "rule_id": "D03-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes use-case or activity models; none exist."
+        },
+        {
+          "rule_id": "D03-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes diagram nodes to word; none exist."
+        },
+        {
+          "rule_id": "D03-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes use-case include/extend relationships; no use-case models exist."
+        },
+        {
+          "rule_id": "D03-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes activity diagrams with control nodes; none exist."
+        },
+        {
+          "rule_id": "D03-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes multi-role workflow diagrams; none exist."
+        },
+        {
+          "rule_id": "D03-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes FMC diagrams; none exist."
+        },
+        {
+          "rule_id": "D03-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes modelling iteration; no modelling artefacts exist to iterate on."
+        },
+        {
+          "rule_id": "D03-R12",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D03-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an MBSE model whose traceability could run continuously; no model exists, and the system is below the scale where one is warranted."
+        },
+        {
+          "rule_id": "D03-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes SysML requirements diagrams; none exist."
+        },
+        {
+          "rule_id": "D03-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a choice between SysML and UML for formal modelling; no formal modelling is present or planned in this small PWA."
+        }
+      ],
+      "findings": [],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The pass on D03-R12 rests on the judgement that this system is small enough that documents-over-model is the rule's own carve-out; the documentation pile's internal drift is real but is filed under other domains."
+      },
+      "coverage": {
+        "files_inspected": 8,
+        "files_skipped": 122,
+        "note": "Checked for diagram and model artefacts across the whole tree (no .puml, .drawio, .mermaid, model files or embedded diagrams found); read the documentation set (TODO.md, VALIDATION.md, DEPLOYMENT docs, .claude/claude.md) to confirm no modelling is referenced."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": []
+    },
+    "d04": {
+      "domain_id": "d04",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D04-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes creation problems needing factory/builder/prototype shapes; object creation here is simple literals and module singletons with no runtime class selection."
+        },
+        {
+          "rule_id": "D04-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes sender/receiver coupling problems; reactive updates are handled by TanStack Query's own invalidation model and no large conditionals or pipelines exist to decouple."
+        },
+        {
+          "rule_id": "D04-R05",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R07",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R08",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R09",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R11",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R12",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D04-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a concurrency-mechanism choice (threads/processes/async runtimes); this is single-threaded browser and Node code with no such decision present."
+        },
+        {
+          "rule_id": "D04-R14",
+          "verdict": "pass",
+          "note": null
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D04-R09",
+          "severity": "medium",
+          "title": "Dead server scaffolding and at least ten unused runtime dependencies bloat the codebase and the audit surface",
+          "location": "package.json:36-100",
+          "body_md": "`server/storage.ts` is an unused Replit scaffold (a `MemStorage` user store no route touches), `drizzle.config.ts` points at a PostgreSQL schema that `shared/schema.ts` does not define, and at least ten runtime dependencies have zero imports anywhere in `client/`, `server/` or `shared/`: `openai`, `passport`, `passport-local`, `express-session`, `connect-pg-simple`, `@neondatabase/serverless`, `drizzle-orm`, `drizzle-zod`, `memorystore`, `next-themes`, `@jridgewell/trace-mapping` (verified by grep). This bloat is not free: the unused packages enlarge the `pnpm audit` surface that has been failing the deploy gate since July, and the dead Postgres scaffold misleads documentation (`.claude/claude.md` claims a PostgreSQL/Drizzle database that does not exist). Remove the unused dependencies and the dead scaffold, and fix the docs.",
+          "issue_title": "Remove unused dependencies and dead Replit server scaffolding",
+          "issue_body": "At least ten runtime dependencies are imported nowhere in `client/src`, `server` or `shared` (verified by grep): `openai`, `passport`, `passport-local`, `express-session`, `connect-pg-simple`, `@neondatabase/serverless`, `drizzle-orm`, `drizzle-zod`, `memorystore`, `next-themes`, `@jridgewell/trace-mapping`. `server/storage.ts` is an unused in-memory user store, and `drizzle.config.ts` references a Postgres schema that `shared/schema.ts` never defines, so `pnpm run db:push` is a trap. Every unused package adds vulnerability-audit surface to the `pnpm audit --audit-level=high` gate that currently blocks deployment, and the phantom database misleads contributors (`.claude/claude.md` documents PostgreSQL/Drizzle as the stack). Delete the unused dependencies, `server/storage.ts`, `drizzle.config.ts` and the `db:push` script, and correct the stack description.",
+          "precondition": "The rule presumes a codebase whose methods and modules are being maintained; the server and client code under `server/` and `client/src/` is that codebase."
+        },
+        {
+          "rule_id": "D04-R10",
+          "severity": "low",
+          "title": "Express error handler responds and then rethrows the same error",
+          "location": "server/index.ts:42-48",
+          "body_md": "The final error middleware sends the JSON response and then executes `throw err`. The response has already gone out, so the rethrow can only produce noise: Express forwards it to its default handler, which finds headers already sent and dumps a stack, and nothing upstream can recover. Either handle the error (respond and log) or rethrow, not both; here, replace the `throw` with structured logging.",
+          "issue_title": "Error middleware throws after sending the response",
+          "issue_body": "`server/index.ts:42-48` responds with the error status and message, then does `throw err` inside the error-handling middleware. Since the response is already sent, the rethrow only reaches Express's default handler, which logs a headers-already-sent style stack trace and adds noise to production logs; no caller can act on it. Remove the `throw` and log the error explicitly instead (with the request path and status), keeping one clear handling path.",
+          "precondition": "The rule presumes layered error handling; the Express error middleware at `server/index.ts:42-48` is that layer."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "Unused-dependency claims are from import grep, not a build-time treeshake analysis; a dependency used via dynamic import or config-only mechanisms would be a false positive, though none of the ten shows such usage."
+      },
+      "coverage": {
+        "files_inspected": 31,
+        "files_skipped": 99,
+        "note": "All hand-written client and server source read; the 46 stock shadcn/ui components were skipped as generated vendor-style code, checked only for whether their optional dependencies are used."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": []
+    },
+    "d05": {
+      "domain_id": "d05",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D05-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D05-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes test-suite design activity to steer; no test design exists here at all, which is recorded as the D05-R08 finding rather than re-counted under every suite-presuming rule."
+        },
+        {
+          "rule_id": "D05-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a finite suite being targeted at fault patterns; no suite exists (see D05-R08 finding)."
+        },
+        {
+          "rule_id": "D05-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a testing-effort level being weighed; automated testing effort is zero, recorded as the D05-R08 finding."
+        },
+        {
+          "rule_id": "D05-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes test effort to allocate; there is none (see D05-R08 finding)."
+        },
+        {
+          "rule_id": "D05-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes black-box and white-box tests to combine; neither kind exists (see D05-R08 finding)."
+        },
+        {
+          "rule_id": "D05-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes found defects feeding new tests; defects are tracked in issues and BUG_REPORT.md but no tests exist for classes to choose (see D05-R08 finding)."
+        },
+        {
+          "rule_id": "D05-R08",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D05-R09",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D05-R10",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D05-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a team where testing can be separated from authorship; this is a single-author project with no second party available, and its risk context is a low-stakes family app."
+        },
+        {
+          "rule_id": "D05-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a suite to maintain; none exists (see D05-R08 finding, which records that bug fixes ship without regression tests)."
+        },
+        {
+          "rule_id": "D05-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a testing lifecycle being run; there is none (see D05-R08 finding)."
+        },
+        {
+          "rule_id": "D05-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes requirement churn driving hand-maintained test decay; there are neither churning requirement models nor tests."
+        },
+        {
+          "rule_id": "D05-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes test models being built; none exist."
+        },
+        {
+          "rule_id": "D05-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes performance testing being planned; this small family PWA has no performance requirements and no performance test activity."
+        },
+        {
+          "rule_id": "D05-R17",
+          "verdict": "not-applicable",
+          "note": "The rule presumes performance runs needing pass/fail targets; no performance testing exists or is planned."
+        },
+        {
+          "rule_id": "D05-R18",
+          "verdict": "not-applicable",
+          "note": "The rule presumes performance test infrastructure and gates; none exist or are planned."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D05-R08",
+          "severity": "high",
+          "title": "No automated tests at any layer; CI validates only that the code compiles and builds",
+          "location": "package.json:6-12",
+          "body_md": "There is not a single test file in the repository, no test runner dependency, and no `test` script (`package.json:6-12`). The deploy gate (`.github/workflows/validate-and-deploy.yml`) checks only `tsc`, `pnpm audit` and that the build produces files; nothing exercises behaviour. Bug fixes ship without regression tests: the favourites-leak fix (TODO.md:56-61) and the production React hook crash (VALIDATION.md:125-133) both landed with no test to stop recurrence, and the riskiest paths (backup import that clears all stores, payout atomicity, completion arithmetic) are wholly unverified. Add Vitest with a handful of unit tests on `AppStorage` (import round-trip, payout, completeChore) and one or two Playwright journeys; wire `pnpm test` into the validate job.",
+          "issue_title": "Add a test suite: the repo has zero automated tests and CI only checks compilation",
+          "issue_body": "The repository contains no test files, no test runner and no `test` script (`package.json:6-12`); the CI gate runs `tsc`, `pnpm audit` and a build-output existence check only. Real regressions have already shipped (the production React error #310 documented in `VALIDATION.md:125-133`, the cross-child favourites leak in `TODO.md:56-61`) and were fixed without regression tests. The highest-risk logic is untested: `AppStorage.importData` clears all IndexedDB stores before re-adding, `payoutChild` moves balances, `completeChore` does the earnings arithmetic. Add Vitest (with `fake-indexeddb` for the storage layer) covering import round-trip and failure, payout, and completion; add one Playwright end-to-end journey (add child, complete chore, pay out); and run them in the validate job before the audit step.",
+          "precondition": "The rule presumes a system whose behaviour is worth verifying; this is a deployed app with real users (user-submitted GitHub issues), destructive data paths (import wipes IndexedDB) and money-denominated balances."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The absence of tests is checked repository-wide; what could not be assessed is any manual test practice the author performs outside the repo."
+      },
+      "coverage": {
+        "files_inspected": 12,
+        "files_skipped": 118,
+        "note": "Swept the whole tree for test files and runners (none exist); read package.json scripts, both CI workflows, validate.sh, VALIDATION.md, TODO.md and BUG_REPORT.md head for the project's actual verification practice."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "GitHub Issues (closed): the defect history behind DEPLOYMENT_STATUS.md:17-27 was not read; it could show whether any fix carried verification steps."
+      ]
+    },
+    "d06": {
+      "domain_id": "d06",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D06-R01",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a team where a second person can review; this is a single-author repository, and no reviewer exists to require. PRs are used for change history, which is the practicable part."
+        },
+        {
+          "rule_id": "D06-R03",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R04",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R05",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R06",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R07",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R08",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R09",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R11",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes self-hosted runners in use; none exist yet (issue #29 proposes one, and this rule applies when it is built)."
+        },
+        {
+          "rule_id": "D06-R13",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D06-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes published releases consumed by others; this repository publishes no releases (the app is deployed as a hosted service, not distributed)."
+        },
+        {
+          "rule_id": "D06-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes released software distributed to consumers; the app ships only as the author's own hosted deployment, with no release artefacts for an SBOM to accompany."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D06-R01",
+          "severity": "medium",
+          "title": "main has been unreleasable through the pipeline since 2026-07-05; merged fixes are not reaching users",
+          "location": ".github/workflows/validate-and-deploy.yml:30-31",
+          "body_md": "Every run of \"Validate and Deploy to Production\" has failed since 2026-07-05: the `pnpm audit --audit-level=high` gate is red (postcss and friends), and the deploy leg cannot reach the server anyway because opti is tailnet-only (issue #29). The result is that main is a branch nobody can release from: PR #33's Buy Me a Coffee URL fix has been merged for weeks while candr.lunt.au still serves the old bundle. Fix the dependency vulnerabilities to green the gate, and implement issue #29's self-hosted runner so the deploy leg has a network path.",
+          "issue_title": "Deploy pipeline red since 2026-07-05: main is unreleasable and merged fixes are stranded",
+          "issue_body": "Every push to main since 2026-07-05 has failed both deployment workflows: the security audit step (`pnpm audit --audit-level=high` in `.github/workflows/validate-and-deploy.yml:30-31`) reports high-severity vulnerabilities, and the SSH deploy step cannot reach the server because it is tailnet-only (issue #29). Merged changes therefore never ship; the PR #33 URL fix is stranded while the live site serves the old bundle. Two workstreams close this: bump or override the vulnerable dependencies until the audit gate is green, and register a self-hosted runner on the server per issue #29 so the deploy job has a network path. Verify success against the live bundle, not the workflow status.",
+          "precondition": "The rule presumes a main branch meant to stay deployable; both deploy workflows trigger on every push to main."
+        },
+        {
+          "rule_id": "D06-R03",
+          "severity": "low",
+          "title": "No required status checks or reviews are enforced on main",
+          "location": ".github/workflows/validate-and-deploy.yml:9-12",
+          "body_md": "The branch protection on `main` enforces nothing: no required status checks and no required reviews (verified via the GitHub API; only the force-push default applies). With deploys triggered by push to main, a red validate run does not block anything, which is how six weeks of failing gates accumulated without forcing a fix. Require the \"Run Pre-Deployment Checks\" job as a status check on main so unmergeable red states become visible friction.",
+          "issue_title": "Require the validate job as a status check on main",
+          "issue_body": "Branch protection on `main` currently enforces no required status checks and no required reviews (GitHub API confirms only defaults). Since deployment triggers on push to main, nothing forces the failing \"Run Pre-Deployment Checks\" job to be dealt with, and it has been red since July without blocking merges. Add a branch protection rule (or ruleset) on `main` requiring that job to pass before merge, so a red gate stops the merge instead of failing silently afterwards.",
+          "precondition": "The rule presumes a protected mainline with CI to gate on; main is the deployment branch and the validate workflow exists to be required."
+        },
+        {
+          "rule_id": "D06-R04",
+          "severity": "high",
+          "title": "A second deploy workflow bypasses the validation gate on every push to main",
+          "location": ".github/workflows/deploy.yml:3-11",
+          "body_md": "Two workflows fire on every push to main: `validate-and-deploy.yml`, whose deploy job correctly declares `needs: validate`, and `deploy.yml`, a standalone \"Deploy to Production\" workflow with no validation, no audit, and no dependency on anything. The gate the project relies on (\"do not bypass the audit\") is therefore already bypassed structurally: today `deploy.yml` only fails because the server is unreachable, but the moment issue #29's self-hosted runner lands, it will ship unvalidated code in parallel with (and racing) the gated pipeline, both running `docker-compose down`/`up` on the same host. Delete `deploy.yml` (its job is a strict subset of the gated workflow) before fixing server reachability.",
+          "issue_title": "deploy.yml deploys without any validation gate and duplicates the gated pipeline",
+          "issue_body": "`.github/workflows/deploy.yml` triggers on every push to main and SSHes straight into a production `docker-compose down && up --build`, with no type check, no build verification and no security audit. The gated pipeline (`validate-and-deploy.yml`) runs the same deploy behind `needs: validate`, so this second workflow is a structural bypass of the audit gate: it currently fails only because the server is unreachable from GitHub-hosted runners, and once a self-hosted runner is added (issue #29) it would deploy unvalidated code while racing the gated deploy on the same docker-compose project. Delete `deploy.yml` and keep the single gated pipeline; if a manual escape hatch is wanted, keep only its `workflow_dispatch` trigger with an explicit confirmation input.",
+          "precondition": "The rule presumes a pipeline whose jobs are ordered by declared dependencies; validate-and-deploy.yml:83-86 declares `needs: validate` for exactly this purpose."
+        },
+        {
+          "rule_id": "D06-R06",
+          "severity": "low",
+          "title": "No concurrency groups; overlapping runs can race the production deploy",
+          "location": ".github/workflows/validate-and-deploy.yml:1-8",
+          "body_md": "Neither workflow declares a `concurrency` group, so two pushes in quick succession run two full pipelines, and (once the server is reachable) two SSH sessions each executing `docker-compose down && up --build` against the same host, in whatever order they land. Add `concurrency: {group: production-deploy, cancel-in-progress: false}` to the deploy job so deploys serialise, and a cancel-in-progress group on the validate job to drop superseded runs.",
+          "issue_title": "Add concurrency groups so deploys serialise and stale validations cancel",
+          "issue_body": "Neither `.github/workflows/validate-and-deploy.yml` nor `deploy.yml` declares `concurrency`. Two quick pushes to main produce overlapping runs; when the server is reachable, each runs `docker-compose down && docker-compose up -d --build` over SSH, and the interleaving can leave the older commit running or the compose project half-down. Add a `concurrency` group named for production deployment with `cancel-in-progress: false` on the deploy job (deploys queue, never interleave) and a `cancel-in-progress: true` group on validation (only the newest commit is checked).",
+          "precondition": "The rule presumes workflows that can be triggered in overlapping succession; both deploy workflows trigger on every push to main."
+        },
+        {
+          "rule_id": "D06-R09",
+          "severity": "low",
+          "title": "Workflows run with the default GITHUB_TOKEN scope; no permissions block declared",
+          "location": ".github/workflows/validate-and-deploy.yml:1",
+          "body_md": "No workflow declares a `permissions:` key, so jobs run with whatever default token scope the repository carries. These pipelines only need to read the repo contents; a compromised step (for example via a compromised action tag, see the pinning finding) would hold whatever the default grants. Add `permissions: contents: read` at the top of each workflow.",
+          "issue_title": "Declare least-privilege permissions for GITHUB_TOKEN in workflows",
+          "issue_body": "Neither workflow in `.github/workflows/` declares a `permissions:` block, so the automatic `GITHUB_TOKEN` runs at the repository default scope. The jobs only read code and deploy over SSH with their own secrets, so the token needs nothing beyond `contents: read`. Add `permissions:\\n  contents: read` at workflow level in `validate-and-deploy.yml` (and any other retained workflow) so a compromised step cannot use a broader token.",
+          "precondition": "The rule presumes GitHub Actions workflows using the automatic token; both workflows in .github/workflows/ do."
+        },
+        {
+          "rule_id": "D06-R10",
+          "severity": "low",
+          "title": "Third-party actions pinned to mutable tags, not commit SHAs",
+          "location": ".github/workflows/validate-and-deploy.yml:93",
+          "body_md": "All actions are referenced by tag (`actions/checkout@v4`, `pnpm/action-setup@v4`, `appleboy/ssh-action@v1.2.0`). Tags are mutable: a compromised action repo can move one onto malicious code that then runs with this repo's secrets, including the SSH private key to the production server. Pin each action to a full commit SHA (with the tag in a comment) in all workflows.",
+          "issue_title": "Pin GitHub Actions to commit SHAs instead of tags",
+          "issue_body": "Workflows reference actions by mutable tag, e.g. `appleboy/ssh-action@v1.2.0` at `.github/workflows/validate-and-deploy.yml:93`, which handles the production SSH private key. If any of these action repositories is compromised, the tag can be moved to malicious code that exfiltrates the deploy credentials. Replace each tag with the corresponding full commit SHA (keeping the version as a trailing comment), and update via PRs when bumping.",
+          "precondition": "The rule presumes third-party marketplace actions in production-facing workflows; `appleboy/ssh-action@v1.2.0` and others run in the deploy pipeline."
+        },
+        {
+          "rule_id": "D06-R11",
+          "severity": "low",
+          "title": "Production deploys are not modelled as a GitHub environment",
+          "location": ".github/workflows/validate-and-deploy.yml:83-99",
+          "body_md": "The deploy job carries no `environment:` declaration, so the production SSH secrets are repository-wide (available to any workflow, including the ungated `deploy.yml`), and there is no recorded deployment history or optional approval gate. Declare `environment: production` on the deploy job and move `SERVER_HOST`, `SSH_PRIVATE_KEY` and friends into that environment's secrets so only the gated job can read them.",
+          "issue_title": "Model production as a GitHub environment and scope deploy secrets to it",
+          "issue_body": "The deploy job in `.github/workflows/validate-and-deploy.yml:83-99` has no `environment:` key, so the SSH credentials for the production server are plain repository secrets readable by every workflow, including the unvalidated `deploy.yml`. Create a `production` environment, move `SERVER_HOST`, `SERVER_USERNAME`, `SSH_PRIVATE_KEY`, `SERVER_PORT` and `DEPLOY_PATH` into it, and add `environment: production` to the gated deploy job. This scopes the secrets to the gated path and gives a recorded deployment history for free.",
+          "precondition": "The rule presumes production deployments driven from workflows; the deploy job at validate-and-deploy.yml:83-99 targets the production server."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "Repository secrets and environment configuration beyond what the API exposes were not inspected; the claim that no environments exist is inferred from the workflows never referencing one."
+      },
+      "coverage": {
+        "files_inspected": 9,
+        "files_skipped": 121,
+        "note": "Read all three workflow files, .gitignore, .github/DEPLOYMENT.md, GITHUB_TOKEN_SETUP.md, rollback scripts and package.json, plus live GitHub state (branch protection API, run history for both deploy workflows, open issues)."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "GitHub repository settings UI (secrets inventory, rulesets beyond the branch protection API response): not accessible; workflow-file evidence used instead."
+      ]
+    },
+    "d07": {
+      "domain_id": "d07",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D07-R01",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-R02",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-R03",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-R05",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes credential-gated sensitive modes; the app has no credentials or auth modes at all (the missing parent/child gate is recorded under the requirements domain)."
+        },
+        {
+          "rule_id": "D07-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes the console reprompt-loop validation idiom; no interactive console input exists in this codebase."
+        },
+        {
+          "rule_id": "D07-R08",
+          "verdict": "not-applicable",
+          "note": "This rule is a cross-reference into the governance domains for the auditor; it states no property of a repository to evaluate."
+        },
+        {
+          "rule_id": "D07-T01",
+          "verdict": "could-not-evaluate",
+          "note": "No record of any security review exists in the repository, so there is no artefact to check against the current OWASP Top 10 edition."
+        },
+        {
+          "rule_id": "D07-T02",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-T03",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-T04",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-T05",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-T06",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D07-T07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an organisation whose secure-SDLC practice spans teams and tooling; this is a single-author hobby project with no organisational process to structure."
+        },
+        {
+          "rule_id": "D07-T08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes password storage; the app has no accounts or passwords."
+        },
+        {
+          "rule_id": "D07-T09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a secrets estate needing centralised management; this deployment holds a single secret in one .env file, and that secret's scoping problem is recorded under D07-R05."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D07-R01",
+          "severity": "medium",
+          "title": "No security thinking is recorded anywhere for an internet-facing write endpoint",
+          "location": "server/routes/issues.ts:30",
+          "body_md": "Nothing in the repository (docs, TODO, issues, code comments) shows any security question being asked before shipping `/api/issues/create`, an internet-reachable endpoint that spends a stored GitHub credential on every call. The concrete consequences are separate findings (no access control, over-scoped token, verbose errors, public screenshots); this finding is the upstream cause. Spend thirty minutes threat-modelling this one endpoint (who can call it, how often, with what payloads, what the token can do) and record the outcome in the repo.",
+          "issue_title": "Threat-model the /api/issues/create endpoint and record the decisions",
+          "issue_body": "The only server endpoint, `POST /api/issues/create` (`server/routes/issues.ts:30`), is publicly reachable, unauthenticated, and spends a stored GitHub credential on every call, yet no security consideration for it is recorded anywhere in the repository. Related issues cover the specific defects (access control, token scope, error leakage, screenshot publishing); this one asks for the upstream fix: a short written threat model for the endpoint (callers, abuse cases, rate expectations, blast radius of the token) checked into the repo, with each accepted risk stated.",
+          "precondition": "The rule presumes security is considered at design time; the repository added a public, unauthenticated POST endpoint that writes to GitHub with a stored credential."
+        },
+        {
+          "rule_id": "D07-R02",
+          "severity": "medium",
+          "title": "The API endpoint validates input with hand-rolled truthiness checks instead of the schema layer the repo already has",
+          "location": "server/routes/issues.ts:44-48",
+          "body_md": "`/api/issues/create` checks only that `issueType`, `category` and `description` are truthy, then trusts every field: no type checks, no length caps, no allowlist on `category` (which becomes a repo label), and `technicalInfo` fields are interpolated into the issue body unexamined. Zod is already a dependency and `shared/schema.ts` is the established pattern. Define a `bugReportSchema` with enums for `issueType`/`category` and length limits, and `safeParse` the body before use.",
+          "issue_title": "Validate the bug-report payload with a Zod schema",
+          "issue_body": "`server/routes/issues.ts:44-48` gates the endpoint on truthiness of three fields and otherwise trusts the payload: unbounded string lengths, no enum check on `category` (used to mint repo labels after a regex transform at `:63-67`), and `technicalInfo` values interpolated straight into the issue markdown. The repo already uses Zod for its data schemas. Add a `bugReportSchema` (enum `issueType`, allowlisted `category`, length-capped strings, optional screenshot as a validated data URL) and reject anything that fails `safeParse` with a 400.",
+          "precondition": "The rule presumes external input crossing into the system; `req.body` at `server/routes/issues.ts:32-41` is attacker-controlled JSON."
+        },
+        {
+          "rule_id": "D07-R03",
+          "severity": "low",
+          "title": "No Content-Security-Policy anywhere, and Express fingerprint exposed",
+          "location": "server/index.ts:5-7",
+          "body_md": "Neither the app nor the proxy sets a `Content-Security-Policy` (verified against the live site: Caddy adds HSTS, `nosniff` and permissions-policy, but no CSP), and `x-powered-by: Express` is served, fingerprinting the stack. `TODO.md:36-39` believes a CSP is active (\"CSP blocking eval... working as intended\"), which is stale. Add `app.disable('x-powered-by')` and a CSP (self plus Google Fonts) either in Express or the Caddy vhost.",
+          "issue_title": "Add a Content-Security-Policy and disable the x-powered-by header",
+          "issue_body": "The live site serves no `Content-Security-Policy` header (checked 2026-08-18: Caddy adds HSTS, `x-content-type-options` and a permissions-policy, but no CSP) while `TODO.md:36-39` asserts one is active, and Express advertises itself via `x-powered-by`. Add `app.disable('x-powered-by')` in `server/index.ts` and set a CSP allowing self plus fonts.googleapis.com/fonts.gstatic.com, either in Express middleware or the Caddy vhost config, then correct TODO.md.",
+          "precondition": "The rule presumes layer boundaries needing named controls; the app serves HTML/JS to browsers through Express behind Caddy."
+        },
+        {
+          "rule_id": "D07-R05",
+          "severity": "high",
+          "title": "The bug-report feature runs on a full-scope, non-expiring classic PAT",
+          "location": "GITHUB_TOKEN_SETUP.md:9-15",
+          "body_md": "`GITHUB_TOKEN_SETUP.md:9-15` instructs creating a classic personal access token with the full `repo` scope and \"No expiration\", stored in the server's `.env`. That credential can push to, delete from, and administer every repository the account owns; a compromise of this one container (whose only endpoint is public and unauthenticated) loses the whole GitHub account's repos. Replace it with a fine-grained PAT scoped to `rodlunt/choresandrewardsV2` with Issues read/write (plus Contents write only if screenshot commits stay), set an expiry, and update the doc.",
+          "issue_title": "Replace the full-scope classic PAT with a fine-grained, single-repo, expiring token",
+          "issue_body": "The bug-report feature authenticates with a classic PAT created per `GITHUB_TOKEN_SETUP.md:9-15`: full `repo` scope, no expiration, stored in the production `.env`. The endpoint that spends it (`server/routes/issues.ts`) is public and unauthenticated, so this token is the blast radius of any server compromise, and it currently covers every repository on the account. Mint a fine-grained PAT restricted to this repository with Issues: read/write (and Contents: write only if screenshot commits are kept), give it an expiry with a rotation reminder, replace the server value, revoke the old token, and update the setup doc.",
+          "precondition": "The rule presumes a server-held credential; the deployment stores `GITHUB_TOKEN` in the server's .env (server/routes/issues.ts:7) and the setup doc prescribes its shape."
+        },
+        {
+          "rule_id": "D07-T02",
+          "severity": "high",
+          "title": "Unauthenticated endpoint lets anyone create issues and commit arbitrary files to the public repo",
+          "location": "server/routes/issues.ts:30",
+          "body_md": "`POST /api/issues/create` has no authentication, no rate limiting and no abuse controls. Any internet client can create unlimited labelled issues on the repo, and by sending a `screenshot` field starting with `data:image` can have arbitrary base64 content committed to the public `bug-report-screenshots` branch (`:114-157`) and served from raw.githubusercontent.com: the endpoint is a free anonymous file host under this GitHub account's name, with no check that the content is actually an image. Add per-IP rate limiting, verify the decoded content is a real image (magic bytes plus a size cap), and consider a lightweight shared secret or CAPTCHA on submission.",
+          "issue_title": "Rate-limit and content-validate /api/issues/create; it currently accepts anonymous writes into the repo",
+          "issue_body": "`server/routes/issues.ts:30` accepts POSTs from anyone with no rate limit or auth. Consequences: unlimited spam issues with attacker-chosen labels, and worse, the screenshot path (`:114-157`) commits whatever base64 follows a `data:image` prefix into the public `bug-report-screenshots` branch, publishing it via raw.githubusercontent.com under your account, with no verification that it is an image and no size cap beyond the JSON body limit. Add express-rate-limit (a few submissions per IP per hour), validate the decoded screenshot's magic bytes and cap its size, and gate submission behind at least a per-deployment shared token or CAPTCHA. Also decide whether screenshot hosting belongs in a public repo at all (see the privacy issue).",
+          "precondition": "The rule presumes requests carrying actions that need authorisation; `POST /api/issues/create` performs GitHub writes on behalf of any caller."
+        },
+        {
+          "rule_id": "D07-T03",
+          "severity": "medium",
+          "title": "Production container ships the full dev toolchain and runs TypeScript through tsx",
+          "location": "Dockerfile:25-40",
+          "body_md": "The production image deliberately keeps all devDependencies (`Dockerfile:25-26`: \"Don't clean up dev dependencies - we need tsx\"), executes TypeScript at runtime via `pnpm exec tsx server/index.ts` (`:40`), and copies the entire source tree in. The built server bundle that `pnpm run build` produces (`dist/index.js`) is created and then ignored. Result: vite, esbuild, tsx and the whole dev graph are present and loadable in production, enlarging the vulnerable surface the failing `pnpm audit` gate is measuring, and `server/vite.ts` statically imports the vite package even on the production path. Run the built `dist/index.js` (`pnpm run start`), prune dev deps in a multi-stage build, and fix the static vite import (Vite's own guidance is a dynamic import behind the dev check).",
+          "issue_title": "Production Docker image should run the built bundle, not tsx with devDependencies installed",
+          "issue_body": "`Dockerfile:25-40` installs all devDependencies, keeps them in the final image, and starts the app with `pnpm exec tsx server/index.ts`, while the `pnpm run build` output (`dist/index.js`) it just created goes unused. The production container therefore carries vite, esbuild, tsx and the full dev dependency graph (extra vulnerability surface for the same audit gate that blocks deploys), and `server/index.ts` statically imports `server/vite.ts`, which imports the `vite` package at module load even in production. Switch to a multi-stage build: build stage runs `pnpm run build`; runtime stage copies `dist/` and production node_modules only and runs `node dist/index.js`. Make the vite dev-server import dynamic (`await import(\"./vite\")` behind the development check) so the bundle has no vite dependency.",
+          "precondition": "The rule presumes a production deployment whose configuration is attack surface; the Dockerfile builds the image `docker-compose.yml` runs in production."
+        },
+        {
+          "rule_id": "D07-T04",
+          "severity": "low",
+          "title": "Docker base image pinned to a mutable tag, not a digest",
+          "location": "Dockerfile:2",
+          "body_md": "Dependencies are properly locked (`pnpm-lock.yaml` with `--frozen-lockfile`), but the base image `node:22-alpine` is a mutable tag re-resolved on every `docker-compose up --build`, so the production runtime can change under the same commit. Pin the base image by digest (`node:22-alpine@sha256:...`) and bump it deliberately.",
+          "issue_title": "Pin the Dockerfile base image by digest",
+          "issue_body": "`Dockerfile:2` uses `FROM node:22-alpine`, a mutable tag that is re-resolved on each rebuild, so two deploys of the same commit can run different runtimes and a registry-side compromise would flow straight into production. Application dependencies are already locked via `pnpm-lock.yaml`. Pin the base image with its digest (`FROM node:22-alpine@sha256:...`) and update the digest deliberately, mirroring the same reasoning as SHA-pinning GitHub Actions.",
+          "precondition": "The rule presumes build inputs that should be immutable; the production image builds `FROM node:22-alpine` on every deploy."
+        },
+        {
+          "rule_id": "D07-T05",
+          "severity": "medium",
+          "title": "Error responses forward internal error messages to the client",
+          "location": "server/routes/issues.ts:186-192",
+          "body_md": "`issues.ts:186-192` returns `error.message` from any failure (Octokit errors can carry request URLs, rate-limit state and repo details), and the global handler at `server/index.ts:42-48` echoes `err.message` for every unhandled error. Internals belong in the server log; the client gets a generic message and an correlation id if needed. Log the full error server-side and return a fixed \"Failed to create issue\" body.",
+          "issue_title": "Stop returning internal error.message values to API clients",
+          "issue_body": "`server/routes/issues.ts:186-192` responds with `error.message` on any failure, and the global Express handler (`server/index.ts:42-48`) does the same for all routes. GitHub client errors can include API URLs, rate-limit and repository detail that map the backend for an attacker probing the unauthenticated endpoint. Log the full error server-side; return only a fixed, generic message (optionally with a correlation id that matches the log line).",
+          "precondition": "The rule presumes errors crossing the trust boundary to callers; both the endpoint catch block and the global error handler respond to public clients."
+        },
+        {
+          "rule_id": "D07-T06",
+          "severity": "low",
+          "title": "No security-relevant logging or alerting for the public endpoint",
+          "location": "server/index.ts:20-34",
+          "body_md": "The only logging is a truncated 80-character request line to stdout (`server/index.ts:20-34`). Validation failures, GitHub API failures and submission bursts are not distinguishable, and nothing alerts a human: abuse of the endpoint (mass issue creation, file-host abuse) would be discovered by browsing the repo. The homelab already runs ntfy and GlitchTip; wire endpoint errors into GlitchTip and add a simple burst alert (N submissions per hour) to ntfy.",
+          "issue_title": "Log and alert on bug-report endpoint failures and abuse",
+          "issue_body": "The server's only logging is a truncated request line (`server/index.ts:20-34`); rejected submissions, GitHub failures and abuse bursts are invisible unless someone happens to be watching the repo. Since the endpoint can be abused to create spam issues and commit files, add structured logs for rejected and failed submissions, report exceptions to the existing GlitchTip instance, and send an ntfy alert when submission volume exceeds a sane per-hour threshold.",
+          "precondition": "The rule presumes security-relevant events worth recording; the public issue-creation endpoint can be abused (spam, file uploads) and its failures matter."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The express.json default body limit (100kb) likely also breaks large screenshot uploads functionally; not filed as a security finding. The Caddy vhost config for candr.lunt.au lives in another repo and was assessed only via live response headers."
+      },
+      "coverage": {
+        "files_inspected": 20,
+        "files_skipped": 110,
+        "note": "All server code, input-handling client components, Dockerfile, compose file, workflows and token setup doc read; live site headers checked with curl. Stock shadcn/ui components skipped."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "The Caddy vhost configuration for candr.lunt.au (in the separate smart-home/opti-stacks repo): assessed only via live HTTP response headers, not the config itself.",
+        "The production server's .env and deployed container state: not inspected; token shape inferred from GITHUB_TOKEN_SETUP.md."
+      ]
+    },
+    "d08": {
+      "domain_id": "d08",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D08-R01",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an organisational risk-management cycle; this is a single-author hobby project with no risk process, and one at NIST formality is not proportionate (the proportionate ask, a lightweight endpoint threat model, is recorded under domain 07)."
+        },
+        {
+          "rule_id": "D08-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes risk-assessment artefacts using these terms; no risk assessment exists."
+        },
+        {
+          "rule_id": "D08-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes classified threats in an assessment; none exists."
+        },
+        {
+          "rule_id": "D08-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a risk assessment being run; none exists or is warranted at this formality."
+        },
+        {
+          "rule_id": "D08-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an asset register underpinning an assessment; no assessment exists, and the estate is one container plus one repo."
+        },
+        {
+          "rule_id": "D08-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes asset valuation within an assessment; none exists."
+        },
+        {
+          "rule_id": "D08-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes threat-modelling framework selection; no threat modelling is happening (its absence for the one public endpoint is the domain 07 finding)."
+        },
+        {
+          "rule_id": "D08-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a vulnerability-hunting programme across property, people and procedures; this is a solo project with no such programme to shape."
+        },
+        {
+          "rule_id": "D08-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes likelihood/impact scoring in an assessment; none exists."
+        },
+        {
+          "rule_id": "D08-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes controls being justified by cost-benefit arithmetic; no control-selection process exists."
+        },
+        {
+          "rule_id": "D08-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes documented risk tolerance and treatment decisions; none exist."
+        },
+        {
+          "rule_id": "D08-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes controls whose residual risk can be recomputed; no risk quantification exists."
+        },
+        {
+          "rule_id": "D08-R13",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D08-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes incident/defence mapping onto the kill chain; no incident-response or defence programme exists at this scale."
+        },
+        {
+          "rule_id": "D08-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an organisational posture audit against the Essential Eight; a single hobby container is below the scale the maturity model addresses."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D08-R13",
+          "severity": "medium",
+          "title": "Known dependency vulnerabilities unremediated for six weeks while the fixes sit in open Dependabot PRs",
+          "location": "package.json:113",
+          "body_md": "The awareness and detection half of vulnerability management works here (Dependabot alerts, the CI `pnpm audit` gate), but remediation does not: 5 alerts are open, the audit gate has been red since 2026-07-05, and the fixes have been sitting in open Dependabot PRs #31 (nanoid) and #32 (postcss, the headline GHSA-r28c-9q8g-f849) since 10-12 August, unmerged. The cycle stops at detection, so the vulnerable versions keep shipping (and keep blocking deploys). Merge the Dependabot PRs, re-run `pnpm audit` for the remainder, and adopt a habit of acting on alerts within days, since this repo's gate makes ignoring them expensive.",
+          "issue_title": "Merge the open Dependabot PRs and clear the six-week-old vulnerability backlog",
+          "issue_body": "GitHub shows 5 open Dependabot alerts, and the `pnpm audit --audit-level=high` CI gate has failed on every run since 2026-07-05. The fixes for the two headline packages already exist as open Dependabot PRs: #31 (nanoid 5.1.6 to 5.1.16, open since 2026-08-10) and #32 (postcss 8.5.16 to 8.5.23, open since 2026-08-12, addressing GHSA-r28c-9q8g-f849). Merge both, run `pnpm audit` locally to identify what remains (transitive paths may need `pnpm.overrides` in `pnpm-workspace.yaml`), and clear the rest. Detection is wired up and working; the gap is that nothing acts on it.",
+          "precondition": "The rule presumes known vulnerabilities needing a remediation cycle; GitHub reports 5 open Dependabot alerts on this repository and `pnpm audit` has failed the CI gate since 2026-07-05."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The alert count (5) is from the Dependabot API today; the exact CVE list behind pnpm audit's 4-high/1-moderate was taken from the session baton rather than a fresh local pnpm audit run (node_modules not installed in this clone)."
+      },
+      "coverage": {
+        "files_inspected": 6,
+        "files_skipped": 124,
+        "note": "Checked repository and GitHub state for risk artefacts (none exist), Dependabot alerts and PRs, CI audit gate history, and the docs set for any recorded risk decisions."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "A fresh local `pnpm audit` run: dependencies are not installed in this clone, so the current vulnerability list is known from the Dependabot API and the failing CI runs rather than a local audit."
+      ]
+    },
+    "d09": {
+      "domain_id": "d09",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D09-R01",
+          "verdict": "not-applicable",
+          "note": "The rule presumes organisational contingency planning; the server is stateless (all data is client-side), recovery is a container rebuild, and a tested contingency plan at this formality is not proportionate for a single-author hobby service."
+        },
+        {
+          "rule_id": "D09-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a contingency-planning programme; none exists or is warranted at this scale."
+        },
+        {
+          "rule_id": "D09-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a business impact analysis; none exists or is warranted."
+        },
+        {
+          "rule_id": "D09-R04",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D09-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes policy/plan/playbook documents for an IR team; there is no team and no such documents are warranted."
+        },
+        {
+          "rule_id": "D09-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes incident response integrated into organisational risk management; no organisation exists here."
+        },
+        {
+          "rule_id": "D09-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes response objectives being set; none exist and formal SLAs are not proportionate."
+        },
+        {
+          "rule_id": "D09-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes response roles across a team; single-author project."
+        },
+        {
+          "rule_id": "D09-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes escalation paths across people; there is one person."
+        },
+        {
+          "rule_id": "D09-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes breach-notification duties under NDB/GDPR for an organisation holding personal data server-side; the server stores no user data (the bug-report privacy exposure is filed under domain 02)."
+        },
+        {
+          "rule_id": "D09-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes incident metrics against targets; no incident-response machinery exists to measure."
+        },
+        {
+          "rule_id": "D09-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a response kit; none exists and one is not warranted at this scale."
+        },
+        {
+          "rule_id": "D09-R13",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D09-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes concurrent recovery/continuity/communications workstreams; single-operator scale."
+        },
+        {
+          "rule_id": "D09-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes supplier/cloud responsibility boundaries being assumed; hosting is the author's own server with Cloudflare only proxying, and no coverage assumptions are documented anywhere to be wrong."
+        },
+        {
+          "rule_id": "D09-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes products with digital elements placed on the EU market under the CRA; this is a personal hosted app outside that scope."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D09-R04",
+          "severity": "medium",
+          "title": "The only copy of family data lives in one browser profile with an unbounded loss window",
+          "location": "client/src/lib/db.ts:37",
+          "body_md": "All user data is client-side IndexedDB and nothing bounds the loss window: the app never calls `navigator.storage.persist()` (verified by grep), so browsers may evict the database under storage pressure, and clearing site data, a lost device or the documented \"users must delete IndexedDB to upgrade\" path (`db.ts:59-60`) erases everything. The only mitigation is a manual export button nobody is prompted to use. Request persistent storage on startup, and prompt for (or automate) periodic export so the recovery point is days rather than forever.",
+          "issue_title": "Guard against silent total data loss: request persistent storage and prompt for backups",
+          "issue_body": "Every child, balance and payout lives only in the visitor's browser IndexedDB (`client/src/lib/db.ts`); the server stores nothing. The app never calls `navigator.storage.persist()`, so the browser is free to evict the database under storage pressure, and site-data clearing or device loss wipes the family's history with no recovery. The export feature exists but is manual and unprompted. Call `navigator.storage.persist()` during startup, surface whether persistence was granted, and add a periodic reminder (or automatic download) of the JSON export so the worst-case loss window is bounded.",
+          "precondition": "The rule presumes data whose acceptable loss window should be defined; the app's children, balances and payout history exist solely in the user's browser IndexedDB (client/src/lib/db.ts), with no server copy."
+        },
+        {
+          "rule_id": "D09-R13",
+          "severity": "medium",
+          "title": "Checked-in recovery tooling is stale and destructive: rollback script force-pushes main to an October 2025 commit",
+          "location": "rollback-to-working.sh:18-19",
+          "body_md": "`rollback-to-working.sh` hard-resets to the hardcoded commit `f68a540` (October 2025) and runs `git push origin main --force`: executed today it would obliterate ten months of history on main. `.github/DEPLOYMENT.md`'s rollback procedure targets the old Windows homeserver (`E:/Prod`, port 2223, npm commands) that no longer hosts the app, which now lives on a tailnet-only Linux server (issue #29). In an incident, both artefacts read as authoritative and both are wrong. Delete the two rollback scripts, and rewrite DEPLOYMENT.md's recovery section for the current host (git checkout of a known-good tag plus `docker compose up -d --build`).",
+          "issue_title": "Delete the stale force-push rollback scripts and fix the recovery docs for the current host",
+          "issue_body": "`rollback-to-working.sh:18-19` does `git reset --hard f68a540 && git push origin main --force`, pinned to a commit from October 2025; running it now would force main back ten months. `rollback.ps1` is its Windows twin, and `.github/DEPLOYMENT.md`'s rollback section documents SSH to the retired Windows homeserver (`E:/Prod/ChoresandRewards`, port 2223) with npm commands, none of which matches the current tailnet-only Linux host. These are the documents someone would follow mid-incident. Delete both scripts, and replace the DEPLOYMENT.md recovery section with the real procedure for the current server: check out a known-good commit or tag and `docker compose up -d --build`, with the deploy path named.",
+          "precondition": "The rule presumes recovery procedures meant to be followed under pressure; the repo ships `rollback-to-working.sh`, `rollback.ps1` and a rollback section in `.github/DEPLOYMENT.md` as exactly that."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "External monitoring of the live service (Uptime Kuma on the homelab) was not inspected; verdicts here concern only what the repository carries."
+      },
+      "coverage": {
+        "files_inspected": 8,
+        "files_skipped": 122,
+        "note": "Read the rollback scripts, DEPLOYMENT docs, Dockerfile healthcheck, db.ts persistence behaviour, and swept the client for storage.persist usage."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "Homelab monitoring configuration (Uptime Kuma, autoheal on the host): lives outside this repository and was not inspected, so whether the container's healthcheck feeds any alerting is unknown."
+      ]
+    },
+    "d10": {
+      "domain_id": "d10",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D10-R01",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D10-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an API with consumers who need generated docs and SDKs; the single endpoint is called only by this repo's own client, so an OpenAPI spec would document nothing anyone external consumes."
+        },
+        {
+          "rule_id": "D10-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes endpoint documentation being written for consumers; the one endpoint is internal to the app with no documentation audience."
+        },
+        {
+          "rule_id": "D10-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes published endpoint documentation; none exists or is needed for a single first-party endpoint."
+        },
+        {
+          "rule_id": "D10-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a resource hierarchy whose consistency matters; there is exactly one endpoint."
+        },
+        {
+          "rule_id": "D10-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D10-R07",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D10-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes published fields with external consumers who can be broken; the endpoint's only consumer ships in the same deploy."
+        },
+        {
+          "rule_id": "D10-R09",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D10-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D10-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an API test suite whose auth cases can be checked; no tests of any kind exist (recorded as the domain 05 finding), and the endpoint has no auth to test."
+        },
+        {
+          "rule_id": "D10-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes executable API test collections; none exist (see the domain 05 finding)."
+        },
+        {
+          "rule_id": "D10-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes consumers integrating multiple services who benefit from a standard error shape; the bespoke `{message}` errors are read by exactly one first-party fetch call."
+        },
+        {
+          "rule_id": "D10-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes endpoint retirement with external consumers to warn; no endpoint is being retired and no external consumers exist."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D10-R01",
+          "severity": "low",
+          "title": "The bug-report payload shape is duplicated on both sides of the API instead of shared",
+          "location": "server/routes/issues.ts:11-27",
+          "body_md": "The payload's shape exists twice: an ad hoc object literal in `BugReport.tsx:121-130` and a TypeScript interface in `issues.ts:11-27`, with nothing keeping them aligned; the repo's own `shared/` directory exists for exactly this. A field rename on one side compiles fine and fails at runtime. Define the payload as a Zod schema in `shared/schema.ts` and derive both the client type and the server validation from it (this pairs with the server-side validation issue from the security review).",
+          "issue_title": "Move the bug-report payload contract into shared/schema.ts",
+          "issue_body": "The bug-report request shape is declared twice: implicitly in the client (`client/src/components/BugReport.tsx:121-130`) and as a server-only interface (`server/routes/issues.ts:11-27`). Nothing ties them together, so a rename on either side breaks the feature at runtime while still type-checking. The repo already centralises shared shapes in `shared/schema.ts` with Zod. Define `bugReportSchema` there, export `type BugReportPayload = z.infer<...>`, use the type in the client and the schema for server-side validation.",
+          "precondition": "The rule presumes an API contract between components; the client (BugReport.tsx:121-130) and server (issues.ts:11-27) exchange the bug-report payload."
+        },
+        {
+          "rule_id": "D10-R07",
+          "severity": "low",
+          "title": "Endpoint collapses outcomes to 200/400/500",
+          "location": "server/routes/issues.ts:181-192",
+          "body_md": "Successful creation returns 200 with a body instead of 201, and a missing `GITHUB_TOKEN` (a service-configuration state) returns the same 500 shape as an unexpected fault. Return 201 for the created issue and 503 for the not-configured case so callers and monitoring can tell outcomes apart.",
+          "issue_title": "Use 201 for created issues and 503 for the unconfigured-token case",
+          "issue_body": "`server/routes/issues.ts` returns 200 for successful issue creation (`:181-185`) and 500 both when `GITHUB_TOKEN` is absent (`:50-55`) and for genuine failures (`:186-192`). Return 201 on creation, and 503 for the missing-configuration case, so monitoring can distinguish \"deployed without config\" from \"GitHub call failed\".",
+          "precondition": "The rule presumes HTTP responses stating outcomes; the endpoint returns statuses at issues.ts:44-55 and 181-192."
+        },
+        {
+          "rule_id": "D10-R10",
+          "severity": "low",
+          "title": "No recorded decision on who may use the API to publish under the owner's GitHub account",
+          "location": "server/routes/issues.ts:7-9",
+          "body_md": "The endpoint works exactly as designed while granting any anonymous caller the ability to publish content (issues, labels, screenshot files) that appears under the repository owner's account. That grant was never decided anywhere; it is a side effect of the implementation. The mechanical fixes (rate limiting, content validation) are filed from the security review; this finding asks for the governance half: decide and record who may submit, at what volume, and what happens to submissions (moderation, retention, takedown).",
+          "issue_title": "Decide and record the access policy for bug-report submissions",
+          "issue_body": "Every call to `POST /api/issues/create` publishes content on `rodlunt/choresandrewardsV2` under the owner's stored credential: issues, minted labels, and committed screenshot files. The security-review issues cover the mechanics (rate limits, validation, token scope); this one covers the policy, which currently exists nowhere. Write down, in the repo, who is meant to be able to submit (any visitor? app users only?), the acceptable volume, and the moderation/retention story for user-submitted content, then check the implemented controls against that policy.",
+          "precondition": "The rule presumes access governance as a design surface; every call to this endpoint publishes issues, labels and files on `rodlunt/choresandrewardsV2` using the owner's stored credential."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "Scoping judgement: most contract rules were set aside because the sole endpoint has no external consumers; if the bug-report API were ever opened to other clients, the not-applicable verdicts on documentation, error shape and versioning would need revisiting."
+      },
+      "coverage": {
+        "files_inspected": 5,
+        "files_skipped": 125,
+        "note": "The API surface is one endpoint; read the server route, its client caller, the shared schema directory, and confirmed no other /api routes exist."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": []
+    },
+    "d11": {
+      "domain_id": "d11",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D11-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R02",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an MVC framework; the client is a React component architecture and the server exposes one JSON endpoint, with no MVC roles to police."
+        },
+        {
+          "rule_id": "D11-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R04",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R05",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R07",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R08",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes components with a scaling axis; this is a single long-running container on one host, appropriate to the load."
+        },
+        {
+          "rule_id": "D11-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes replicated state across two or more nodes; the server is a single node holding no replicated state."
+        },
+        {
+          "rule_id": "D11-R11",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R12",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R13",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R14",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D11-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a data store approaching single-node ceilings; there is no server-side data store at all."
+        },
+        {
+          "rule_id": "D11-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a bursty producer-consumer pair needing decoupling; no such workload exists here."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D11-R11",
+          "severity": "low",
+          "title": "Deploy takes the site down before building, extending every deploy's outage to the length of the image build",
+          "location": ".github/workflows/validate-and-deploy.yml:106-107",
+          "body_md": "The deploy sequence is `docker-compose down` then `docker-compose up -d --build`: the container stops first and the (multi-minute pnpm install and vite build) image build happens while the site is dead. Removing the `down` step (or running `docker-compose build` first, then `up -d`) shrinks the outage to a container restart. In-place deployment is a fine choice at this scale; the ordering is just paying for downtime it does not need to.",
+          "issue_title": "Build the image before stopping the container in the deploy script",
+          "issue_body": "Both deploy workflows run `docker-compose down` followed by `docker-compose up -d --build`, so the production site is down for the entire image build (pnpm install plus vite build, minutes) on every deploy. Compose can build while the old container serves: replace the pair with `docker-compose build && docker-compose up -d` (or simply `docker-compose up -d --build`, which recreates after building), cutting each deploy's outage to a restart.",
+          "precondition": "The rule presumes a rollout strategy being chosen for a production deploy; the deploy script runs on every push to main."
+        },
+        {
+          "rule_id": "D11-R13",
+          "severity": "low",
+          "title": "Required configuration is checked lazily at request time instead of failing fast at startup",
+          "location": "server/routes/issues.ts:50-55",
+          "body_md": "`GITHUB_TOKEN` is only checked when a user submits a report: a deployment missing the variable starts cleanly, reports healthy (the healthcheck only curls `/`), and fails the first user with a 500. Validate required configuration at startup and log loudly (or refuse to start) when it is absent, so a misconfigured deploy is caught at deploy time, not by a user.",
+          "issue_title": "Validate GITHUB_TOKEN at startup instead of on first submission",
+          "issue_body": "`server/routes/issues.ts:50-55` discovers a missing `GITHUB_TOKEN` only when someone submits a bug report; the container starts, passes its healthcheck (which only curls `/`), and the misconfiguration surfaces as a user-facing 500 whenever the first report arrives. Check required environment variables at startup in `server/index.ts` and either exit non-zero or log an unmissable warning, so a bad deploy fails at deploy time.",
+          "precondition": "The rule presumes environment-supplied configuration; GITHUB_TOKEN is read from the environment at server/routes/issues.ts:7."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The build-during-downtime claim assumes no image cache makes the rebuild near-instant on the host; even fully cached, the down-first ordering still serialises outage with build."
+      },
+      "coverage": {
+        "files_inspected": 12,
+        "files_skipped": 118,
+        "note": "Read the server entry, vite integration, Dockerfile, compose file, deploy workflows, service worker and client architecture (pages/hooks/lib split)."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "The production host's compose runtime state and Caddy vhost: architecture at the host level (network 'web', proxy config) is known from this repo's compose file and memory of the estate, not inspected directly this run."
+      ]
+    },
+    "d12": {
+      "domain_id": "d12",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D12-R01",
+          "verdict": "not-applicable",
+          "note": "The rule presumes competing personal, business and sectional interests in professional work; this is a single-author personal project with no such conflict present."
+        },
+        {
+          "rule_id": "D12-R02",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D12-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes client work and competence representation; there is no client."
+        },
+        {
+          "rule_id": "D12-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes scope negotiation with a client; none exists."
+        },
+        {
+          "rule_id": "D12-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes schedule or money pressure to trade away a flagged control; no such pressure or flagged-control trade is on record here."
+        },
+        {
+          "rule_id": "D12-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a go-live promise to a client over an untested system; no client or promise exists (the untested-system state itself is the domain 05 finding)."
+        },
+        {
+          "rule_id": "D12-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes observed conduct of other professionals; single-author project."
+        },
+        {
+          "rule_id": "D12-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a contested decision needing the legal/ethical 2x2; no such decision is on record in this repository."
+        },
+        {
+          "rule_id": "D12-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes organisational decisions to run through ethical frames; none are present."
+        },
+        {
+          "rule_id": "D12-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes deployment of new technology whose risks need weighing against alternatives; a family chore tracker does not reach that threshold, and its one real risk exposure (bug-report publishing) is filed under domain 02."
+        },
+        {
+          "rule_id": "D12-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes designs where one person's consent unlocks another's data; no such mechanism exists in this app."
+        },
+        {
+          "rule_id": "D12-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an entity carrying Privacy Act / NDB obligations; a private individual's hobby project is outside APP-entity scope, and the concrete privacy exposure (public bug-report screenshots) is already filed under domain 02."
+        },
+        {
+          "rule_id": "D12-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes systems whose function can discriminate across groups; a family's own chore tracker has no such decision surface (accessibility gaps are handled in the interface domain)."
+        },
+        {
+          "rule_id": "D12-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes internal preferences competing with user needs across a team; author and primary user are the same household."
+        },
+        {
+          "rule_id": "D12-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes contested calls needing an evidence record; none are present."
+        },
+        {
+          "rule_id": "D12-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a contested decision to test through three frames; none is present."
+        },
+        {
+          "rule_id": "D12-R17",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a regulatory regime attaching to the design; as a private individual's non-commercial app it sits outside APP-entity scope, and no other regime attaches to the data it handles."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D12-R02",
+          "severity": "medium",
+          "title": "The repo's status documents assert operational health that has been false since early July",
+          "location": "DEPLOYMENT_STATUS.md:1-4",
+          "body_md": "Three documents currently assert health that is not true: `DEPLOYMENT_STATUS.md` (\"LIVE AND UPDATED... working perfectly\"), `TODO.md:80-85` (\"All workflows passing\"), and `.github/DEPLOYMENT.md:249-252` (\"Fully Operational\", plus a server, path and URL that were retired when hosting moved to the tailnet-only Linux box). Every deploy workflow has failed since 2026-07-05, and the live site serves a stale bundle. Stale green status is worse than no status: it answers the reader's question wrongly with confidence. Delete or rewrite the status sections to reflect reality, and stop keeping hand-asserted status prose that nothing updates; point at the Actions page and live URL instead.",
+          "issue_title": "Status docs claim everything works; the pipeline has been red since July. Fix or delete them",
+          "issue_body": "`DEPLOYMENT_STATUS.md` opens with \"LIVE AND UPDATED... working perfectly\", `TODO.md:80-85` says all workflows pass, and `.github/DEPLOYMENT.md:249-252` says \"Fully Operational\" while documenting the retired Windows homeserver and old domain. In reality both deploy workflows have failed on every run since 2026-07-05 and candr.lunt.au serves a bundle from 5 July. Hand-maintained status prose goes stale silently and then misleads with authority. Rewrite these docs to describe process (how to deploy, where to check status) rather than asserting current state, and let the Actions page and the live URL be the status.",
+          "precondition": "The rule presumes status being reported to a reader; DEPLOYMENT_STATUS.md, TODO.md:80-85 and .github/DEPLOYMENT.md:249-252 are the repo's status record, read by future sessions and contributors."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "Most rules were set aside on the single-author, non-commercial context; the APP-entity scoping judgement on D12-R12/R17 is a lay reading of the small-operator boundary, not legal advice."
+      },
+      "coverage": {
+        "files_inspected": 7,
+        "files_skipped": 123,
+        "note": "Read the documentation set (DEPLOYMENT_STATUS.md, DEPLOYMENT_SUMMARY.md head, TODO.md, .github/DEPLOYMENT.md, .claude/claude.md, nextsession.md) against the live pipeline and site state."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": []
+    },
+    "d13": {
+      "domain_id": "d13",
+      "status": "could-not-run",
+      "rule_verdicts": [],
+      "findings": [],
+      "self_assessment": null,
+      "coverage": null,
+      "consulted_sources": [],
+      "reason": "The domain's subject matter, putting numbers or prices on work, is entirely absent from this repository. I looked for estimation or pricing artefacts across the tree and the tracker: no estimates, quotes, business cases, cost comparisons, contingency figures, story points or velocity data, no pricing structures or contracts, and no sponsor-facing figures of any kind (TODO.md, the deployment docs, .claude/claude.md, nextsession.md and the open GitHub issues carry priorities but no numbers on effort or money; the Buy Me a Coffee link is a tip jar, not pricing). This is a single-author hobby project built without estimation, so not one of the sixteen rules has anything present to reach a verdict against.",
+      "uninspected_evidence": null
+    },
+    "d14": {
+      "domain_id": "d14",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D14-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D14-R02",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D14-R03",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an active hypothesis-testing session; no live diagnosis is underway to evaluate."
+        },
+        {
+          "rule_id": "D14-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a search space being walked during live diagnosis; none is underway."
+        },
+        {
+          "rule_id": "D14-R05",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D14-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D14-R07",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D14-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes triaging a live misbehaviour; none is being triaged in this audit."
+        },
+        {
+          "rule_id": "D14-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes DNS-level fault localisation in progress; not applicable to a static repository audit."
+        },
+        {
+          "rule_id": "D14-R10",
+          "verdict": "not-applicable",
+          "note": "The rule presumes ICMP evidence being weighed; no live diagnosis is underway."
+        },
+        {
+          "rule_id": "D14-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes HTTP status classes being read during diagnosis; none underway."
+        },
+        {
+          "rule_id": "D14-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes packet capture during a layer disagreement; none underway."
+        },
+        {
+          "rule_id": "D14-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes an outage being assessed against incident criteria; no outage is under assessment and no incident criteria exist at this scale."
+        },
+        {
+          "rule_id": "D14-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a plausible security incident with evidence-handling decisions; none exists."
+        },
+        {
+          "rule_id": "D14-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes compiled code debuggable with watchpoints; this JS/TS system has no such target."
+        },
+        {
+          "rule_id": "D14-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes native crashes needing a memory checker; none exist in this stack."
+        },
+        {
+          "rule_id": "D14-R17",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a performance fault being theorised about; none is under investigation."
+        },
+        {
+          "rule_id": "D14-R18",
+          "verdict": "not-applicable",
+          "note": "The rule presumes latency data being read; no performance diagnosis exists."
+        },
+        {
+          "rule_id": "D14-R19",
+          "verdict": "not-applicable",
+          "note": "The rule presumes optimisation work being contemplated; none is."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D14-R07",
+          "severity": "low",
+          "title": "Incident-time mitigations from October 2025 are still in the production build config",
+          "location": "vite.config.ts:31",
+          "body_md": "The emergency measures from the October 2025 debugging saga were never reverted after the root cause was fixed: `vite.config.ts:31` still sets `minify: false` with the comment \"DEBUGGING: Disable to see full React error messages\", so every production deploy since ships an unminified bundle (larger downloads for every user), and the one-time rollback scripts from the same incident still sit in the repo root (filed separately as a recovery-tooling finding). Re-enable minification (keep `sourcemap: true` if readable production stacks are wanted) and clear out the rest of the incident debris.",
+          "issue_title": "Re-enable minification: the 'DEBUGGING' vite setting from October 2025 still ships to production",
+          "issue_body": "`vite.config.ts:31` has `minify: false, // DEBUGGING: Disable to see full React error messages`, a mitigation from the October 2025 React error #310 incident (BUG_REPORT.md) that was never reverted after the underlying hook bug was fixed. Every user has been downloading unminified bundles since. Set `minify` back to the default; `sourcemap: true` on line 30 already provides readable stack traces without shipping unminified code.",
+          "precondition": "The rule presumes bleeding-stopping measures taken during an incident; the October 2025 React error #310 incident (documented in BUG_REPORT.md and VALIDATION.md) is that incident, and its mitigations are visible in the tree."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "medium",
+        "limits": "Most rules address the conduct of a live diagnosis, which a static audit cannot observe; passes on R01/R02/R05/R06 rest on the quality of the written diagnostic records, and BUG_REPORT.md was read in part (its opening analysis), not end to end."
+      },
+      "coverage": {
+        "files_inspected": 6,
+        "files_skipped": 124,
+        "note": "Assessed the repository's recorded diagnostic history (BUG_REPORT.md analysis, issue #29's root-cause work, nextsession.md's live-artefact verification, VALIDATION.md's debug checklist) rather than a live fault; no diagnosis is currently in progress."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "BUG_REPORT.md beyond its first section: the full 2025-10-19 line-by-line analysis was sampled, not read end to end.",
+        "GitHub Issues (closed): the incident history behind past diagnoses was not read."
+      ]
+    },
+    "d15": {
+      "domain_id": "d15",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D15-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R02",
+          "verdict": "could-not-evaluate",
+          "note": "No user research or testing record exists, so whether design opinions were ever tested against users cannot be determined from the repository."
+        },
+        {
+          "rule_id": "D15-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R04",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R05",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R06",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R07",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R08",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R09",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D15-R10",
+          "verdict": "could-not-evaluate",
+          "note": "Keyboard interaction rests on Radix primitives, which are sound, but the brand palette's contrast ratios were not measured in this run, so contrast conformance cannot be verdicted either way."
+        },
+        {
+          "rule_id": "D15-R11",
+          "verdict": "could-not-evaluate",
+          "note": "No assistive-technology testing has ever occurred; per the rule's own guidance for artefacts without testable users, the honest record is untested, not satisfied."
+        },
+        {
+          "rule_id": "D15-R12",
+          "verdict": "could-not-evaluate",
+          "note": "No record of a prototyping phase exists; the Replit scaffold suggests the initial generation became the product, but the design history is unrecorded."
+        },
+        {
+          "rule_id": "D15-R13",
+          "verdict": "not-applicable",
+          "note": "The rule presumes prototyping activity whose fidelity is being chosen; none exists."
+        },
+        {
+          "rule_id": "D15-R14",
+          "verdict": "could-not-evaluate",
+          "note": "Whether prototype code became the product cannot be established from history; the Replit scaffolding residue that suggests it is filed under the code-structure domain."
+        },
+        {
+          "rule_id": "D15-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes usability testing being planned; no testing programme exists for this family app."
+        },
+        {
+          "rule_id": "D15-R16",
+          "verdict": "not-applicable",
+          "note": "The rule presumes usability test sessions; none exist."
+        },
+        {
+          "rule_id": "D15-R17",
+          "verdict": "not-applicable",
+          "note": "The rule presumes heuristic evaluation with several evaluators; no such team exists for this single-author project."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D15-R05",
+          "severity": "medium",
+          "title": "Import destroys all data with no confirmation, and an accidental chore completion cannot be undone",
+          "location": "client/src/pages/SettingsPage.tsx:107-136",
+          "body_md": "Two irreversible actions lack the protection the reversible-checked-confirmed rule requires. Import (`SettingsPage.tsx:107-136`) clears children, chores and payouts and replaces them the moment a file is chosen: no confirmation naming what will be destroyed, no undo, no automatic pre-import export. Completing a chore (`ChildChoresPage.tsx:257-264`) adds to a child's balance with a single tap on a child-operated screen, and the app offers no way to reverse it: no undo, and no UI anywhere to decrement a total, so a double-tap or wrong-row tap permanently inflates the balance. Add a confirmation to import that names the replaced data (and auto-export first), and add an undo (toast with Undo, or a completion ledger with delete) for completions.",
+          "issue_title": "Add confirmation/auto-backup to import and an undo for chore completions",
+          "issue_body": "Two destructive interactions have no way back. (1) Import backup (`client/src/pages/SettingsPage.tsx:107-136`): selecting a file immediately clears all children, chores and payouts and writes the file's contents, with no confirmation stating that current data will be replaced, no undo and no automatic backup of what is about to be destroyed. Confirm with the scope named (\"Replace 2 children, 24 chores and 15 payouts?\") and export the current data automatically before importing. (2) Chore completion (`client/src/pages/ChildChoresPage.tsx:257-264`): one tap permanently adds the chore's value to a balance, the screen is designed for children, and no mechanism exists anywhere to reverse or adjust it. Show an Undo action in the completion toast, or record completions and allow deleting one.",
+          "precondition": "The rule presumes destructive actions in the interface; import replaces the entire IndexedDB store, and completing a chore permanently adds money to a balance."
+        },
+        {
+          "rule_id": "D15-R09",
+          "severity": "medium",
+          "title": "Known accessibility failures have sat in the backlog for ten months as deferred polish",
+          "location": "TODO.md:14-23",
+          "body_md": "Icon-only buttons throughout the interface (the star/edit/delete controls on `ChildChoresPage.tsx:229-255`, the trash button on `SettingsPage.tsx:184-193`, the icon-only Settings nav item in `App.tsx:108-116`) have no accessible names, a WCAG 4.1.2 failure that makes them unusable with a screen reader. This has been in `TODO.md` since October 2025 marked \"Priority: Medium (improves accessibility compliance)\", which is exactly the pattern this rule names: accessibility as an audit to pass later, deferred and never done. The fix is mechanical: add `aria-label` to every icon-only button; it is an hour's work.",
+          "issue_title": "Add aria-labels to icon-only buttons (open since October 2025)",
+          "issue_body": "Every icon-only control lacks an accessible name: the star/edit/delete/complete cluster on `client/src/pages/ChildChoresPage.tsx:229-255`, the delete-child button on `client/src/pages/SettingsPage.tsx:184-193`, and the icon-only Settings item in the nav (`client/src/App.tsx:108-116`). Screen-reader users hear \"button\" with no purpose, failing WCAG 2.2 AA (4.1.2 Name, Role, Value). `TODO.md:14-23` has recorded this since October 2025. Add `aria-label` attributes to each icon-only button and to links whose text is hidden at small widths.",
+          "precondition": "The rule presumes accessibility treated as a design constraint; the app is a public deployed product, and TODO.md:14-23 records its known WCAG failures."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "medium",
+        "limits": "Assessment is from source; no interactive session, contrast measurement or assistive-technology run was performed against the live app, which is why R10 and R11 are could-not-evaluate rather than verdicted."
+      },
+      "coverage": {
+        "files_inspected": 14,
+        "files_skipped": 116,
+        "note": "Read all page components, dialogs, App shell, index.html and TODO.md's accessibility backlog. Did not run a live screen-reader or contrast measurement pass."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": [
+        "The live rendered UI at candr.lunt.au: layouts, contrast and focus behaviour were assessed from source and the shadcn/Radix defaults, not from the running interface."
+      ]
+    },
+    "d16": {
+      "domain_id": "d16",
+      "status": "completed",
+      "rule_verdicts": [
+        {
+          "rule_id": "D16-R01",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R02",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R03",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R04",
+          "verdict": "not-applicable",
+          "note": "The rule presumes chart-type selection; the app renders no charts (recharts is an unused dependency)."
+        },
+        {
+          "rule_id": "D16-R05",
+          "verdict": "not-applicable",
+          "note": "The rule presumes quantity encodings in charts; none exist."
+        },
+        {
+          "rule_id": "D16-R06",
+          "verdict": "not-applicable",
+          "note": "The rule presumes chart series and decoration; no charts exist."
+        },
+        {
+          "rule_id": "D16-R07",
+          "verdict": "not-applicable",
+          "note": "The rule presumes bar charts with axes; none exist."
+        },
+        {
+          "rule_id": "D16-R08",
+          "verdict": "not-applicable",
+          "note": "The rule presumes scaled/windowed series charts; none exist."
+        },
+        {
+          "rule_id": "D16-R09",
+          "verdict": "not-applicable",
+          "note": "The rule presumes uncertainty display on decision artefacts; no such artefacts exist."
+        },
+        {
+          "rule_id": "D16-R10",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R11",
+          "verdict": "not-applicable",
+          "note": "The rule presumes causal or associational claims in presented findings; the app makes none."
+        },
+        {
+          "rule_id": "D16-R12",
+          "verdict": "not-applicable",
+          "note": "The rule presumes significance testing; none exists."
+        },
+        {
+          "rule_id": "D16-R13",
+          "verdict": "finding",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R14",
+          "verdict": "not-applicable",
+          "note": "The rule presumes a dashboard being commissioned; none is."
+        },
+        {
+          "rule_id": "D16-R15",
+          "verdict": "not-applicable",
+          "note": "The rule presumes dashboard design; none exists."
+        },
+        {
+          "rule_id": "D16-R16",
+          "verdict": "pass",
+          "note": null
+        },
+        {
+          "rule_id": "D16-R17",
+          "verdict": "not-applicable",
+          "note": "The rule presumes charts needing text alternatives; the only graphic (a progress bar) has its figure stated in adjacent text."
+        },
+        {
+          "rule_id": "D16-R18",
+          "verdict": "not-applicable",
+          "note": "The rule presumes decision artefacts being tested on readers; no such testing context exists for this family app."
+        },
+        {
+          "rule_id": "D16-R19",
+          "verdict": "not-applicable",
+          "note": "The rule presumes central-value summaries; the app presents only sums and counts."
+        },
+        {
+          "rule_id": "D16-R20",
+          "verdict": "not-applicable",
+          "note": "The rule presumes central values needing spread; none are presented."
+        },
+        {
+          "rule_id": "D16-R21",
+          "verdict": "not-applicable",
+          "note": "The rule presumes time series, indices or relative units; none are presented."
+        }
+      ],
+      "findings": [
+        {
+          "rule_id": "D16-R10",
+          "severity": "low",
+          "title": "The 'This Week' stats card mislabels two of its three numbers, and the progress bar has no stated meaning",
+          "location": "client/src/pages/HomePage.tsx:130-163",
+          "body_md": "Under the heading \"This Week\" (`HomePage.tsx:133`), only Payouts is actually filtered to the last seven days; \"Active Kids\" is the all-time child count and \"Total Earned\" is the sum of current balances, both unrelated to the week. Separately, each child card's progress bar fills toward an undisclosed $10 target (`:79`), so the reader cannot tell what fullness means. Retitle the card (or filter all three figures to the week), and either label the bar's target or remove it.",
+          "issue_title": "Fix the 'This Week' card: two of three stats are not weekly, and the progress bar's target is unstated",
+          "issue_body": "`client/src/pages/HomePage.tsx:130-163` presents three figures under \"This Week\", but only Payouts is week-filtered; Active Kids is the total number of children and Total Earned is the sum of current balances. A reader reasonably concludes the family earned that amount this week, which is wrong. Also, the per-child progress bar (`:79`) fills toward a hardcoded $10 that is never stated anywhere in the UI. Either compute all three stats over the week and keep the heading, or retitle the card to \"Overview\"; and label the progress bar's goal (or make it configurable) so the bar means something.",
+          "precondition": "The rule presumes numbers presented under a heading that claims what they show; HomePage's stats card is headed \"This Week\"."
+        },
+        {
+          "rule_id": "D16-R13",
+          "severity": "low",
+          "title": "Estimated completion counts are displayed as exact figures",
+          "location": "client/src/pages/TotalsPage.tsx:77",
+          "body_md": "`TotalsPage.tsx:77` and `HomePage.tsx:78` derive \"chores completed\" from `Math.floor(totalCents / 100)`, a rough estimate the code itself labels as such, and present it as an exact count with no estimate marker. This is the presentation half of the data-model issue (completions are never stored); until that is fixed, either remove these figures or label them honestly. Fixing the data model closes this finding too.",
+          "issue_title": "Stop presenting the completion-count estimate as an exact figure",
+          "issue_body": "`client/src/pages/TotalsPage.tsx:77` (\"N chores completed\") and `client/src/pages/HomePage.tsx:78` (\"N done\") display `Math.floor(totalCents / 100)`, which the code comments call a \"Rough estimate\", as an exact count. Any chore not valued at $1 makes it wrong (the seeded defaults include $5 chores). This is the display half of the missing-completions data-model issue; if completions get stored, derive the real count, otherwise drop these figures rather than labelling guesses as facts.",
+          "precondition": "The rule presumes numbers presented with implied precision; \"N chores completed\" and \"N done\" are shown as exact counts."
+        }
+      ],
+      "self_assessment": {
+        "confidence": "high",
+        "limits": "The two findings overlap deliberately with the domain 01 completions finding at the fix level; they are recorded here because the presentation defect stands even if the data model is never changed."
+      },
+      "coverage": {
+        "files_inspected": 6,
+        "files_skipped": 124,
+        "note": "Reviewed every place the UI presents numbers: HomePage stats and progress bars, TotalsPage, HistoryPage, SettingsPage balances, PayoutDialog amounts."
+      },
+      "consulted_sources": [],
+      "reason": null,
+      "uninspected_evidence": []
+    }
+  },
+  "filed_issue_urls": {
+    "D01-R01#1": "https://github.com/rodlunt/choresandrewardsV2/issues/34",
+    "D01-R05#1": "https://github.com/rodlunt/choresandrewardsV2/issues/35",
+    "D01-R07#1": "https://github.com/rodlunt/choresandrewardsV2/issues/36",
+    "D01-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/37",
+    "D01-R13#1": "https://github.com/rodlunt/choresandrewardsV2/issues/38",
+    "D01-R14#1": "https://github.com/rodlunt/choresandrewardsV2/issues/39",
+    "D02-R06#1": "https://github.com/rodlunt/choresandrewardsV2/issues/40",
+    "D02-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/41",
+    "D02-R15#1": "https://github.com/rodlunt/choresandrewardsV2/issues/42",
+    "D04-R09#1": "https://github.com/rodlunt/choresandrewardsV2/issues/43",
+    "D04-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/44",
+    "D05-R08#1": "https://github.com/rodlunt/choresandrewardsV2/issues/45",
+    "D06-R01#1": "https://github.com/rodlunt/choresandrewardsV2/issues/46",
+    "D06-R03#1": "https://github.com/rodlunt/choresandrewardsV2/issues/47",
+    "D06-R04#1": "https://github.com/rodlunt/choresandrewardsV2/issues/48",
+    "D06-R06#1": "https://github.com/rodlunt/choresandrewardsV2/issues/49",
+    "D06-R09#1": "https://github.com/rodlunt/choresandrewardsV2/issues/50",
+    "D06-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/51",
+    "D06-R11#1": "https://github.com/rodlunt/choresandrewardsV2/issues/52",
+    "D07-R01#1": "https://github.com/rodlunt/choresandrewardsV2/issues/53",
+    "D07-R02#1": "https://github.com/rodlunt/choresandrewardsV2/issues/54",
+    "D07-R03#1": "https://github.com/rodlunt/choresandrewardsV2/issues/55",
+    "D07-R05#1": "https://github.com/rodlunt/choresandrewardsV2/issues/56",
+    "D07-T02#1": "https://github.com/rodlunt/choresandrewardsV2/issues/57",
+    "D07-T03#1": "https://github.com/rodlunt/choresandrewardsV2/issues/58",
+    "D07-T04#1": "https://github.com/rodlunt/choresandrewardsV2/issues/59",
+    "D07-T05#1": "https://github.com/rodlunt/choresandrewardsV2/issues/60",
+    "D07-T06#1": "https://github.com/rodlunt/choresandrewardsV2/issues/61",
+    "D08-R13#1": "https://github.com/rodlunt/choresandrewardsV2/issues/62",
+    "D09-R04#1": "https://github.com/rodlunt/choresandrewardsV2/issues/63",
+    "D09-R13#1": "https://github.com/rodlunt/choresandrewardsV2/issues/64",
+    "D10-R01#1": "https://github.com/rodlunt/choresandrewardsV2/issues/65",
+    "D10-R07#1": "https://github.com/rodlunt/choresandrewardsV2/issues/66",
+    "D10-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/67",
+    "D11-R11#1": "https://github.com/rodlunt/choresandrewardsV2/issues/68",
+    "D11-R13#1": "https://github.com/rodlunt/choresandrewardsV2/issues/69",
+    "D12-R02#1": "https://github.com/rodlunt/choresandrewardsV2/issues/70",
+    "D14-R07#1": "https://github.com/rodlunt/choresandrewardsV2/issues/71",
+    "D15-R05#1": "https://github.com/rodlunt/choresandrewardsV2/issues/72",
+    "D15-R09#1": "https://github.com/rodlunt/choresandrewardsV2/issues/73",
+    "D16-R10#1": "https://github.com/rodlunt/choresandrewardsV2/issues/74",
+    "D16-R13#1": "https://github.com/rodlunt/choresandrewardsV2/issues/75"
+  },
+  "rules_fetched_domain_ids": [
+    "d01",
+    "d02",
+    "d03",
+    "d04",
+    "d05",
+    "d06",
+    "d07",
+    "d08",
+    "d09",
+    "d10",
+    "d11",
+    "d12",
+    "d13",
+    "d14",
+    "d15",
+    "d16"
+  ],
+  "rules_fetch_unknown_domain_ids": [],
+  "domain_rules_fetched_at": {
+    "d01": "2026-08-18T10:33:07Z",
+    "d02": "2026-08-18T10:35:28Z",
+    "d03": "2026-08-18T10:37:02Z",
+    "d04": "2026-08-18T10:37:39Z",
+    "d05": "2026-08-18T10:38:50Z",
+    "d06": "2026-08-18T10:40:11Z",
+    "d07": "2026-08-18T10:41:56Z",
+    "d08": "2026-08-18T10:44:50Z",
+    "d09": "2026-08-18T10:45:50Z",
+    "d10": "2026-08-18T10:47:10Z",
+    "d11": "2026-08-18T10:48:30Z",
+    "d12": "2026-08-18T10:49:38Z",
+    "d13": "2026-08-18T10:50:31Z",
+    "d14": "2026-08-18T10:50:52Z",
+    "d15": "2026-08-18T10:51:51Z",
+    "d16": "2026-08-18T10:53:03Z"
+  },
+  "domain_recorded_at": {
+    "d01": "2026-08-18T10:35:25Z",
+    "d02": "2026-08-18T10:36:59Z",
+    "d03": "2026-08-18T10:37:36Z",
+    "d04": "2026-08-18T10:38:48Z",
+    "d05": "2026-08-18T10:40:07Z",
+    "d06": "2026-08-18T10:41:53Z",
+    "d07": "2026-08-18T10:44:44Z",
+    "d08": "2026-08-18T10:45:47Z",
+    "d09": "2026-08-18T10:47:07Z",
+    "d10": "2026-08-18T10:48:26Z",
+    "d11": "2026-08-18T10:49:35Z",
+    "d12": "2026-08-18T10:50:28Z",
+    "d13": "2026-08-18T10:50:48Z",
+    "d14": "2026-08-18T10:51:48Z",
+    "d15": "2026-08-18T10:53:00Z",
+    "d16": "2026-08-18T10:54:07Z"
+  },
+  "feedback_issue_url": "https://github.com/rodlunt/engineering-audit/issues/248"
+}
