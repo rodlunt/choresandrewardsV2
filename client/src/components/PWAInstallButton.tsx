@@ -127,10 +127,15 @@ export default function PWAInstallButton() {
   return (
     <>
       <div className="relative inline-block">
+        {/* Same structural sizing as the Add Child button beside it (default
+            Button size, same horizontal padding), so the pair reads as
+            equals; the dismiss control floats as a corner badge instead of
+            padding the button wider. The pulse-ring draws the eye without
+            the flicker of an opacity pulse. */}
         <Button
           onClick={handleInstallClick}
           variant="outline"
-          className="bg-white border-brand-coral text-brand-coral hover:bg-brand-coral hover:text-white transition-all shadow-soft pr-10"
+          className="bg-white border-brand-coral text-brand-coral hover:bg-brand-coral hover:text-white transition-all shadow-soft animate-pulse-ring"
           data-testid="button-install-pwa"
         >
           <Smartphone className="w-4 h-4 mr-2" />
@@ -138,7 +143,7 @@ export default function PWAInstallButton() {
         </Button>
         <button
           onClick={handleRemindLater}
-          className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-brand-coral/10 rounded transition-colors"
+          className="absolute -top-1.5 -right-1.5 p-0.5 bg-white border border-brand-coral/40 rounded-full shadow-soft hover:bg-brand-coral/10 transition-colors"
           aria-label="Remind me later"
           data-testid="button-remind-later"
         >
