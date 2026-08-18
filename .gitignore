@@ -46,3 +46,8 @@ coverage-report.json
 attached_assets/
 !attached_assets/ChoresAndRewardsLogo_*.png
 !attached_assets/ChoresAppLogoText_*.webp
+
+# Test tooling output
+test-results/
+playwright-report/
+audit-output/
