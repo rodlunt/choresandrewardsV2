@@ -97,11 +97,23 @@ minutes. Detail in [`.github/DEPLOYMENT.md`](.github/DEPLOYMENT.md) and
 
 ## Screenshots
 
-| Dashboard | A child's chores | Payout history |
-|---|---|---|
-| ![Family dashboard listing two children with running dollar totals, real completion counts, progress toward a ten dollar goal, and Install App and Add Child buttons](docs/images/dashboard.png) | ![A child's chore list with dollar values, favourite, edit and delete controls, and a completion toast offering Undo](docs/images/child-chores.png) | ![Payout history showing a paid-out amount with the child's name and time, above the app footer](docs/images/history.png) |
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
+    <img src="docs/images/dashboard.png" width="30%" alt="Family dashboard listing two children with running dollar totals, real completion counts, progress toward a ten dollar goal, and Install App and Add Child buttons">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/child-chores-dark.png">
+    <img src="docs/images/child-chores.png" width="30%" alt="A child's chore list with dollar values, favourite, edit and delete controls, and the running total earned">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/history-dark.png">
+    <img src="docs/images/history.png" width="30%" alt="Payout history showing a paid-out amount with the child's name and time, above the app footer">
+  </picture>
+</p>
 
-Captured from the real app at a phone viewport with seeded example data.
+Captured from the real app at a phone viewport with seeded example data; each image adapts to
+GitHub's light or dark theme.
 
 ## Licence
 
