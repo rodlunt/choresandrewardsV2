@@ -1,5 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { Octokit } from '@octokit/rest';
+import rateLimit from 'express-rate-limit';
+import { bugReportSchema } from '../../shared/schema';
 
 const router = Router();
 
@@ -8,52 +10,97 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO_OWNER = process.env.GITHUB_REPO_OWNER || 'rodlunt';
 const GITHUB_REPO_NAME = process.env.GITHUB_REPO_NAME || 'choresandrewardsV2';
 
-interface BugReportPayload {
-  issueType: 'bug' | 'feature';
-  category: string;
-  description: string;
-  stepsToReproduce?: string;
-  expectedBehavior?: string;
-  actualBehavior?: string;
-  screenshot?: string | null;
-  technicalInfo: {
-    timestamp: string;
-    userAgent: string;
-    url: string;
-    resolution: string;
-    appVersion: string;
-    buildNumber: string;
-  };
+const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024; // 5 MB decoded
+
+// Detect the actual image format from its magic bytes rather than trusting
+// the data URL's declared mime type. Only PNG, JPEG and WebP are accepted.
+function detectImageType(buffer: Buffer): 'png' | 'jpeg' | 'webp' | null {
+  if (
+    buffer.length >= 4 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return 'png';
+  }
+
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'jpeg';
+  }
+
+  if (
+    buffer.length >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    return 'webp';
+  }
+
+  return null;
 }
 
+// A handful of reports per IP per hour is enough for genuine use and cheap
+// to spam past, but keeps the endpoint from being used to mint unlimited
+// GitHub issues and screenshot uploads.
+const createIssueLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many reports submitted. Please try again later.' },
+});
+
 // POST /api/issues/create
-router.post('/create', async (req: Request, res: Response) => {
-  try {
-    const {
-      issueType,
-      category,
-      description,
-      stepsToReproduce,
-      expectedBehavior,
-      actualBehavior,
-      screenshot,
-      technicalInfo,
-    } = req.body as BugReportPayload;
+router.post('/create', createIssueLimiter, async (req: Request, res: Response) => {
+  const parseResult = bugReportSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({
+      message: 'Invalid bug report payload.',
+    });
+  }
 
-    // Validate required fields
-    if (!issueType || !category || !description) {
+  const {
+    issueType,
+    category,
+    description,
+    stepsToReproduce,
+    expectedBehavior,
+    actualBehavior,
+    screenshot,
+    technicalInfo,
+  } = parseResult.data;
+
+  // Validate the screenshot content server-side: the client's declared mime
+  // type in the data URL prefix is not trustworthy on its own.
+  let screenshotBase64: string | null = null;
+  if (screenshot) {
+    const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
+    const decoded = Buffer.from(base64Data, 'base64');
+
+    if (decoded.length > MAX_SCREENSHOT_BYTES) {
       return res.status(400).json({
-        message: 'Missing required fields: issueType, category, description',
+        message: 'Screenshot is too large.',
       });
     }
 
-    if (!GITHUB_TOKEN) {
-      console.error('GITHUB_TOKEN not configured');
-      return res.status(500).json({
-        message: 'GitHub integration not configured. Please contact support.',
+    if (!detectImageType(decoded)) {
+      return res.status(400).json({
+        message: 'Screenshot does not look like a valid image.',
       });
     }
 
+    screenshotBase64 = base64Data;
+  }
+
+  if (!GITHUB_TOKEN) {
+    console.error('GITHUB_TOKEN not configured; refusing bug report submission');
+    return res.status(503).json({
+      message: 'Bug reporting is temporarily unavailable. Please contact support.',
+    });
+  }
+
+  try {
     // Initialize Octokit
     const octokit = new Octokit({
       auth: GITHUB_TOKEN,
@@ -110,13 +157,9 @@ router.post('/create', async (req: Request, res: Response) => {
     const issueNumber = issueResponse.data.number;
     console.log(`Created issue #${issueNumber}: ${title}`);
 
-    // Handle screenshot upload if provided
-    if (screenshot && screenshot.startsWith('data:image')) {
+    // Handle screenshot upload if provided (already content-validated above)
+    if (screenshotBase64) {
       try {
-        // Extract base64 data
-        const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
         // Generate filename
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `bug-report-${issueNumber}-${timestamp}.png`;
@@ -152,7 +195,7 @@ router.post('/create', async (req: Request, res: Response) => {
           repo: GITHUB_REPO_NAME,
           path: filePath,
           message: `Add screenshot for issue #${issueNumber}`,
-          content: base64Data,
+          content: screenshotBase64,
           branch: screenshotBranch,
         });
 
@@ -178,7 +221,7 @@ router.post('/create', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({
+    res.status(201).json({
       success: true,
       issueNumber,
       url: issueResponse.data.html_url,
@@ -187,7 +230,6 @@ router.post('/create', async (req: Request, res: Response) => {
     console.error('Error creating GitHub issue:', error);
     res.status(500).json({
       message: 'Failed to create issue. Please try again.',
-      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

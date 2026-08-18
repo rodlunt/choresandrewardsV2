@@ -71,3 +71,44 @@ export const appDataSchema = z.object({
 });
 
 export type AppData = z.infer<typeof appDataSchema>;
+
+// Bug report / feature request schema
+// Single source of truth for the payload shape shared by the client
+// (BugReport.tsx) and the server (routes/issues.ts), so a rename on either
+// side fails type-checking instead of breaking silently at runtime.
+export const bugReportCategories = [
+  'User Interface',
+  'Chores Management',
+  'Child Management',
+  'Rewards/Payouts',
+  'Settings',
+  'PWA/Offline',
+  'Performance',
+  'Other',
+] as const;
+
+const technicalInfoFieldSchema = z.string().max(500);
+
+export const bugReportSchema = z.object({
+  issueType: z.enum(['bug', 'feature']),
+  category: z.enum(bugReportCategories),
+  description: z.string().min(1, 'Description is required').max(5000),
+  stepsToReproduce: z.string().max(5000).optional(),
+  expectedBehavior: z.string().max(5000).optional(),
+  actualBehavior: z.string().max(5000).optional(),
+  screenshot: z
+    .string()
+    .startsWith('data:image/', 'Screenshot must be a data:image/* URL')
+    .nullable()
+    .optional(),
+  technicalInfo: z.object({
+    timestamp: technicalInfoFieldSchema,
+    userAgent: technicalInfoFieldSchema,
+    url: technicalInfoFieldSchema,
+    resolution: technicalInfoFieldSchema,
+    appVersion: technicalInfoFieldSchema,
+    buildNumber: technicalInfoFieldSchema,
+  }),
+});
+
+export type BugReportPayload = z.infer<typeof bugReportSchema>;

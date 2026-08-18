@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Camera, Send, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
+import { bugReportCategories, type BugReportPayload } from '@shared/schema';
 
 interface BugReportProps {
   open: boolean;
@@ -26,21 +27,13 @@ interface BugReportProps {
 }
 
 type IssueType = 'bug' | 'feature';
+type BugCategory = (typeof bugReportCategories)[number];
 
-const CATEGORIES = [
-  'User Interface',
-  'Chores Management',
-  'Child Management',
-  'Rewards/Payouts',
-  'Settings',
-  'PWA/Offline',
-  'Performance',
-  'Other',
-];
+const CATEGORIES = bugReportCategories;
 
 export default function BugReport({ open, onOpenChange }: BugReportProps) {
   const [issueType, setIssueType] = useState<IssueType>('bug');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<BugCategory | ''>('');
   const [description, setDescription] = useState('');
   const [stepsToReproduce, setStepsToReproduce] = useState('');
   const [expectedBehavior, setExpectedBehavior] = useState('');
@@ -118,7 +111,7 @@ export default function BugReport({ open, onOpenChange }: BugReportProps) {
 
     setIsSubmitting(true);
     try {
-      const payload = {
+      const payload: BugReportPayload = {
         issueType,
         category,
         description,
@@ -201,7 +194,7 @@ export default function BugReport({ open, onOpenChange }: BugReportProps) {
           {/* Category */}
           <div className="space-y-2">
             <Label>Category *</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={(value) => setCategory(value as BugCategory)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
