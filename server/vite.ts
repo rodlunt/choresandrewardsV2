@@ -4,7 +4,6 @@ import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
-import { nanoid } from "nanoid";
 
 // Development-only: this module imports the "vite" package, so it must
 // never be imported from a code path that also runs in production. It is
@@ -25,13 +24,11 @@ export async function setupVite(app: Express, server: Server) {
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
-      },
-    },
+    // Plain logger: the Replit template's custom logger called
+    // process.exit(1) on ANY logged error, including errors the browser
+    // reports back over HMR, so loading the app in a real browser could
+    // kill the whole dev server (found by the Playwright journey).
+    customLogger: viteLogger,
     server: serverOptions,
     appType: "custom",
   });
@@ -48,12 +45,13 @@ export async function setupVite(app: Express, server: Server) {
         "index.html",
       );
 
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
+      // always reload the index.html file from disk incase it changes.
+      // The template's per-request ?v=<nanoid> cache-bust on the entry
+      // script was removed as needless: Vite's dev server manages module
+      // caching itself. (It was once suspected of breaking fast refresh;
+      // the actual culprit was the CSP blocking Vite's inline preamble,
+      // fixed in server/index.ts.)
+      const template = await fs.promises.readFile(clientTemplate, "utf-8");
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {

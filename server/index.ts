@@ -48,12 +48,18 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '10mb' })); // screenshots need more than the 100kb default
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-  if (!req.path.startsWith('/api')) {
-    res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
-  }
-  next();
-});
+// Production only: Vite's dev middleware injects inline scripts (the
+// react-refresh preamble) that script-src 'self' would block, which breaks
+// the app in a real browser during development. The production build has
+// no inline scripts, so the strict policy applies there.
+if (app.get('env') !== 'development') {
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) {
+      res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+    }
+    next();
+  });
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
