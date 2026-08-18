@@ -1,10 +1,54 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log, serveStatic } from "./static";
+
+// Content-Security-Policy applied to everything except /api responses (which
+// are JSON, not documents a browser renders). 'unsafe-inline' on style-src
+// is required by Radix UI and other inline React styles.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src https://fonts.gstatic.com",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "manifest-src 'self'",
+  "worker-src 'self'",
+].join('; ');
+
+// Fail loud, not silent: a missing GITHUB_TOKEN otherwise only surfaces the
+// first time someone submits a bug report, as a bare 503, well after the
+// container has passed its healthcheck and been deployed.
+function checkRequiredEnv() {
+  if (!process.env.GITHUB_TOKEN) {
+    log('='.repeat(72));
+    log('WARNING: GITHUB_TOKEN is not set.');
+    log('Bug/feature reporting (POST /api/issues/create) is DISABLED and');
+    log('will respond 503 to every submission until this is fixed.');
+    log('Set GITHUB_TOKEN in the environment and redeploy.');
+    log('='.repeat(72));
+  }
+}
 
 const app = express();
-app.use(express.json());
+
+// The app runs behind Caddy and Cloudflare. Trust the first proxy hop so
+// req.ip (and therefore the rate limiter's key) reflects the real client
+// address instead of the reverse proxy's.
+app.set('trust proxy', 1);
+
+// Don't advertise the framework.
+app.disable('x-powered-by');
+
+app.use(express.json({ limit: '10mb' })); // screenshots need more than the 100kb default
 app.use(express.urlencoded({ extended: false }));
+
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
+    res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -37,20 +81,29 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  checkRequiredEnv();
+
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Log the full error server-side; never forward internal error detail
+    // (stack traces, upstream API URLs, rate-limit info) to the client.
+    console.error(`[error] ${req.method} ${req.path} -> ${status}`, err);
+
+    res.status(status).json({ message: "Internal Server Error" });
   });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  //
+  // The vite dev middleware is loaded via a dynamic import gated on this
+  // branch, and "./vite" is built as an external module (see package.json's
+  // build script), so the production bundle never pulls in the vite package.
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
     serveStatic(app);
