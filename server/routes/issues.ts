@@ -2,6 +2,9 @@ import { Router, type Request, type Response } from 'express';
 import { Octokit } from '@octokit/rest';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { bugReportSchema } from '../../shared/schema';
+import { logIssueEvent } from '../lib/log';
+import { reportFault } from '../lib/glitchtip';
+import { recordAcceptedSubmission, alertGithubApiFailure } from '../lib/ntfy';
 
 const router = Router();
 
@@ -59,7 +62,6 @@ const createIssueLimiter = rateLimit({
   limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many reports submitted. Please try again later.' },
   keyGenerator: (req) => {
     const cfIp = req.headers['cf-connecting-ip'];
     if (typeof cfIp === 'string' && cfIp.length > 0) {
@@ -67,12 +69,20 @@ const createIssueLimiter = rateLimit({
     }
     return ipKeyGenerator(req.ip ?? '');
   },
+  handler: (_req, res) => {
+    logIssueEvent({ event: 'rejected-rate-limit', outcome: 'rejected', status: 429 });
+    res.status(429).json({ message: 'Too many reports submitted. Please try again later.' });
+  },
 });
 
 // POST /api/issues/create
 router.post('/create', createIssueLimiter, async (req: Request, res: Response) => {
   const parseResult = bugReportSchema.safeParse(req.body);
   if (!parseResult.success) {
+    // Reason category only (which field/rule failed), never the submitted
+    // values themselves.
+    const reason = parseResult.error.issues[0]?.path.join('.') || 'unknown';
+    logIssueEvent({ event: 'rejected-validation', outcome: 'rejected', status: 400, reason });
     return res.status(400).json({
       message: 'Invalid bug report payload.',
     });
@@ -97,12 +107,14 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
     const decoded = Buffer.from(base64Data, 'base64');
 
     if (decoded.length > MAX_SCREENSHOT_BYTES) {
+      logIssueEvent({ event: 'rejected-screenshot', outcome: 'rejected', status: 400, reason: 'too-large' });
       return res.status(400).json({
         message: 'Screenshot is too large.',
       });
     }
 
     if (!detectImageType(decoded)) {
+      logIssueEvent({ event: 'rejected-screenshot', outcome: 'rejected', status: 400, reason: 'unrecognised-format' });
       return res.status(400).json({
         message: 'Screenshot does not look like a valid image.',
       });
@@ -112,7 +124,7 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
   }
 
   if (!GITHUB_TOKEN) {
-    console.error('GITHUB_TOKEN not configured; refusing bug report submission');
+    logIssueEvent({ event: 'token-missing', outcome: 'rejected', status: 503 });
     return res.status(503).json({
       message: 'Bug reporting is temporarily unavailable. Please contact support.',
     });
@@ -173,7 +185,8 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
     });
 
     const issueNumber = issueResponse.data.number;
-    console.log(`Created issue #${issueNumber}: ${title}`);
+    logIssueEvent({ event: 'submission-accepted', outcome: 'accepted', status: 201, issueNumber });
+    recordAcceptedSubmission();
 
     // Handle screenshot upload if provided (already content-validated above)
     if (screenshotBase64) {
@@ -229,9 +242,18 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
           body: `**Screenshot**: ${screenshotUrl}`,
         });
 
-        console.log(`Uploaded screenshot for issue #${issueNumber}`);
       } catch (screenshotError) {
-        console.error('Failed to upload screenshot:', screenshotError);
+        logIssueEvent({
+          event: 'screenshot-upload-failed',
+          outcome: 'error',
+          status: 201,
+          issueNumber,
+          detail: screenshotError instanceof Error ? screenshotError.message : String(screenshotError),
+        });
+        // Best-effort fault report: the issue itself was created fine, so
+        // this must never turn into a failed request.
+        void reportFault({ event: 'screenshot-upload-failed', error: screenshotError, tags: { issueNumber: String(issueNumber) } });
+
         // Don't fail the whole request if screenshot upload fails
         await octokit.issues.createComment({
           owner: GITHUB_REPO_OWNER,
@@ -248,7 +270,18 @@ router.post('/create', createIssueLimiter, async (req: Request, res: Response) =
       url: issueResponse.data.html_url,
     });
   } catch (error) {
-    console.error('Error creating GitHub issue:', error);
+    logIssueEvent({
+      event: 'github-api-failure',
+      outcome: 'error',
+      status: 500,
+      detail: error instanceof Error ? error.message : String(error),
+    });
+    // Genuine fault: the GitHub API call itself failed, so reports may be
+    // getting lost. Report it (best-effort) and alert (throttled), since
+    // otherwise this is invisible until someone notices no issues arriving.
+    void reportFault({ event: 'github-api-failure', error });
+    alertGithubApiFailure();
+
     res.status(500).json({
       message: 'Failed to create issue. Please try again.',
     });
