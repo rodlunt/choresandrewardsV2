@@ -187,6 +187,7 @@ export default function SettingsPage() {
                     variant="ghost"
                     onClick={() => handleDeleteChild(child.id, child.name)}
                     className="text-brand-coral/60 hover:text-brand-coral hover:bg-brand-coral/10"
+                    aria-label={`Delete ${child.name}`}
                     data-testid={`button-delete-child-${child.id}`}
                   >
                     <Trash2 className="w-4 h-4" />

@@ -70,7 +70,7 @@ function AppContent() {
                 location === '/' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
-              }`} data-testid="nav-home">
+              }`} aria-label="Home" data-testid="nav-home">
                 <Users className="w-4 h-4" />
                 <span className="font-medium text-xs sm:text-sm hidden sm:inline">Home</span>
               </button>
@@ -80,7 +80,7 @@ function AppContent() {
                 location === '/totals' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
-              }`} data-testid="nav-totals">
+              }`} aria-label="Totals" data-testid="nav-totals">
                 <DollarSign className="w-4 h-4" />
                 <span className="font-medium text-xs sm:text-sm hidden sm:inline">Totals</span>
               </button>
@@ -90,7 +90,7 @@ function AppContent() {
                 location === '/chores' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
-              }`} data-testid="nav-chores">
+              }`} aria-label="Chores" data-testid="nav-chores">
                 <ListTodo className="w-4 h-4" />
                 <span className="font-medium text-xs sm:text-sm hidden sm:inline">Chores</span>
               </button>
@@ -100,7 +100,7 @@ function AppContent() {
                 location === '/history' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
-              }`} data-testid="nav-history">
+              }`} aria-label="History" data-testid="nav-history">
                 <History className="w-4 h-4" />
                 <span className="font-medium text-xs sm:text-sm hidden sm:inline">History</span>
               </button>
@@ -110,7 +110,7 @@ function AppContent() {
                 location === '/settings' 
                   ? 'bg-white text-brand-coral shadow-soft' 
                   : 'text-brand-grayDark hover:bg-white/70'
-              }`} data-testid="nav-settings">
+              }`} aria-label="Settings" data-testid="nav-settings">
                 <Settings className="w-4 h-4" />
               </button>
             </Link>
