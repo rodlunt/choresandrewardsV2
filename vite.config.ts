@@ -28,7 +28,6 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     sourcemap: true, // Keep source maps for production debugging
-    minify: false, // DEBUGGING: Disable to see full React error messages
     rollupOptions: {
       output: {
         manualChunks(id) {
