@@ -1,0 +1,28 @@
+name: Feature request
+description: Something the app should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: The need
+      description: Who needs this and what job it does for them, not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        Two or three testable statements that define done. Done means these pass,
+        not "finished typing". Epics get split into smaller issues before work starts.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: The boring alternative, and why it does not suffice (if it does, say so).

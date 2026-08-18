@@ -1,0 +1,32 @@
+name: Bug report
+description: Something is broken or behaving wrongly
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to...
+        2. Tap...
+        3. See...
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        Two or three testable statements that define done. Done means these pass,
+        not "finished typing". Where possible, name the artefact that proves it
+        (a test, a command and its output, the live URL).
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
