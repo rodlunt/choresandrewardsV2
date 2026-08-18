@@ -170,6 +170,8 @@ export default function BugReport({ open, onOpenChange }: BugReportProps) {
           <DialogTitle>Report a Bug or Request a Feature</DialogTitle>
           <DialogDescription>
             Help us improve Chores & Rewards by reporting issues or suggesting new features.
+            Your report, including any screenshot and basic browser details, is sent privately
+            to the developer and is not published anywhere public.
           </DialogDescription>
         </DialogHeader>
 

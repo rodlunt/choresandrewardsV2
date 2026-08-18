@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll origin/main and deploy candr.lunt.au when CI is green
+Documentation=https://github.com/rodlunt/choresandrewardsV2/blob/main/deploy/README.md
+# Backup alarm: fires if this unit itself crashes or times out. The script
+# sends its own richer alerts; this catches the script dying before it can.
+OnFailure=ntfy-fail@%n.service
+
+[Service]
+Type=oneshot
+# A hung build must not hold the lock forever: kill and let OnFailure report.
+TimeoutStartSec=900
+ExecStart=/usr/bin/flock -n /run/candr-deploy.lock /usr/local/lib/candr-deploy/deploy-poll.sh

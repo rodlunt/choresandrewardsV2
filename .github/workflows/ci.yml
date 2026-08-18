@@ -1,4 +1,4 @@
-name: Validate and Deploy to Production
+name: CI
 
 on:
   push:
@@ -113,55 +113,3 @@ jobs:
           name: build-output
           path: dist/
           retention-days: 7
-
-  deploy:
-    name: Deploy to Server
-    needs: [validate, audit]
-    # Pull requests run the gates only; deployment happens on push to main
-    # (and manual dispatch), never from a PR ref.
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    environment: production
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-
-            echo "📥 Pulling latest changes..."
-            git pull origin main
-
-            echo "🔄 Rebuilding and restarting Docker containers..."
-            docker-compose build
-            docker-compose up -d
-
-            echo "✅ Deployment complete!"
-
-            echo "📊 Container status:"
-            docker-compose ps
-
-            echo "🔍 Checking app health..."
-            sleep 5
-            docker logs chores-rewards-app --tail 20
-
-      - name: Notify deployment status
-        if: always()
-        run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment successful!"
-          else
-            echo "❌ Deployment failed!"
-            exit 1
-          fi

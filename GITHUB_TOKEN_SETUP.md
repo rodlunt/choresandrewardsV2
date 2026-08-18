@@ -1,7 +1,9 @@
 # GitHub Token Setup for Bug Report Feature
 
 The bug report feature lets users submit bugs and feature requests from the app, which creates
-GitHub issues in this repository via the `/api/issues` route.
+GitHub issues in the private `rodlunt/candr-reports` intake repository via the `/api/issues`
+route. Reports (including screenshots and browser details) deliberately do not land in this
+public repository; when a report becomes real work, a sanitised issue is written here by hand.
 
 ## Setup Instructions
 
@@ -10,7 +12,8 @@ GitHub issues in this repository via the `/api/issues` route.
 1. Go to https://github.com/settings/personal-access-tokens/new
 2. Give it a descriptive name: `ChoresAndRewards Bug Reports`
 3. Set **Resource owner** to `rodlunt` and **Repository access** to "Only select repositories",
-   then pick `choresandrewardsV2`. Do not grant access to any other repository.
+   then pick `candr-reports` (the private intake repo). Do not grant access to any other
+   repository.
 4. Set **Expiration** to 90 days.
 5. Under **Repository permissions**, grant:
    - **Issues**: Read and write
@@ -37,7 +40,7 @@ Paste the token at the prompt, then write it into `.env` along with:
 
 ```
 GITHUB_REPO_OWNER=rodlunt
-GITHUB_REPO_NAME=choresandrewardsV2
+GITHUB_REPO_NAME=candr-reports
 ```
 
 ### 3. Recreate the container so it picks up the new environment
@@ -51,7 +54,7 @@ docker compose up -d
 1. Visit https://candr.lunt.au
 2. Click the **Bug Report** button (floating button, bottom-right)
 3. Fill out the form and submit
-4. Check the repository's Issues tab for the new issue
+4. Check the private `candr-reports` repository's Issues tab for the new issue
 
 ## Security Notes
 
