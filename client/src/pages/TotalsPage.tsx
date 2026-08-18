@@ -74,8 +74,7 @@ export default function TotalsPage() {
       <div className="space-y-4">
         {children?.map((child, index) => {
           const childPayouts = payouts?.filter(p => p.childId === child.id) || [];
-          const choreCount = Math.floor(child.totalCents / 100); // Rough estimate
-          
+
           return (
             <Card key={child.id} className="shadow-soft" data-testid={`card-child-total-${child.id}`}>
               <CardContent className="p-6">
@@ -91,7 +90,7 @@ export default function TotalsPage() {
                         {child.name}
                       </h3>
                       <p className="text-brand-grayDark/60 text-sm" data-testid={`text-child-chores-${child.id}`}>
-                        {choreCount} chores completed • {childPayouts.length} total payouts
+                        {childPayouts.length} total payouts
                       </p>
                     </div>
                   </div>

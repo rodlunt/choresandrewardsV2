@@ -157,6 +157,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
           size="sm"
           onClick={() => setLocation('/')}
           className="p-2 hover:bg-white rounded-lg"
+          aria-label="Back to home"
           data-testid="button-back"
         >
           <ArrowLeft className="w-5 h-5 text-brand-grayDark" />
@@ -231,6 +232,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                       variant="ghost"
                       size="sm"
                       className={`p-2 ${isFavorite ? 'text-brand-yellow hover:text-brand-yellow/80' : 'text-brand-grayDark/40 hover:text-brand-yellow'} hover:bg-brand-yellow/10`}
+                      aria-label={isFavorite ? `Remove ${chore.title} from favorites` : `Add ${chore.title} to favorites`}
                       data-testid={`button-toggle-favorite-${chore.id}`}
                     >
                       <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -240,6 +242,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                     variant="outline"
                     size="sm"
                     className="p-2 hover:bg-brand-grayLight"
+                    aria-label={`Edit ${chore.title}`}
                     data-testid={`button-edit-chore-${chore.id}`}
                   >
                     <Edit className="w-4 h-4" />
@@ -249,6 +252,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                     variant="outline"
                     size="sm"
                     className="p-2 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                    aria-label={`Delete ${chore.title}`}
                     data-testid={`button-delete-chore-${chore.id}`}
                   >
                     <Trash2 className="w-4 h-4" />

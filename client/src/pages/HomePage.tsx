@@ -75,7 +75,6 @@ export default function HomePage() {
       {/* Children Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {children?.map((child, index) => {
-          const completedChores = Math.floor(child.totalCents / 100); // Rough estimate
           const progressPercent = Math.min((child.totalCents / 1000) * 100, 100); // Progress to $10
 
           return (
@@ -99,14 +98,21 @@ export default function HomePage() {
                         <span className="text-sm text-brand-grayDark/60">earned</span>
                       </div>
                       <div className="flex items-center gap-1 mt-2">
-                        <div className="flex-1 bg-brand-grayLight rounded-full h-2">
-                          <div 
+                        <div
+                          className="flex-1 bg-brand-grayLight rounded-full h-2"
+                          role="progressbar"
+                          aria-valuenow={Math.round(progressPercent)}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${child.name}'s progress toward $10 goal`}
+                        >
+                          <div
                             className="bg-gradient-to-r from-brand-teal to-brand-yellow h-2 rounded-full transition-all duration-300"
                             style={{ width: `${progressPercent}%` }}
                           />
                         </div>
                         <span className="text-xs text-brand-grayDark/60" data-testid={`text-child-progress-${child.id}`}>
-                          {completedChores} done
+                          toward $10 goal
                         </span>
                       </div>
                     </div>
@@ -130,7 +136,7 @@ export default function HomePage() {
       {/* Quick Stats */}
       <Card className="shadow-soft">
         <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-brand-grayDark mb-4">This Week</h2>
+          <h2 className="text-xl font-semibold text-brand-grayDark mb-4">Overview</h2>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="flex items-center justify-center w-12 h-12 bg-brand-teal/10 rounded-xl mx-auto mb-2">
@@ -157,7 +163,7 @@ export default function HomePage() {
               <div className="text-2xl font-bold text-brand-yellow" data-testid="text-payouts">
                 {totalPayouts}
               </div>
-              <div className="text-sm text-brand-grayDark/60">Payouts</div>
+              <div className="text-sm text-brand-grayDark/60">Payouts (7 days)</div>
             </div>
           </div>
         </CardContent>
