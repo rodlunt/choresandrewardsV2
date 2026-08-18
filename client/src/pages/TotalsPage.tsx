@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useChildren, usePayouts, useSettings } from '@/hooks/use-app-data';
+import { useChildren, useCompletions, useSettings } from '@/hooks/use-app-data';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
+import PinPromptDialog from '@/components/PinPromptDialog';
 import { Child } from '@shared/schema';
 import { formatValue } from '@/lib/format';
 import { DollarSign, Users } from 'lucide-react';
@@ -11,12 +13,13 @@ import { DollarSign, Users } from 'lucide-react';
 export default function TotalsPage() {
   const [showPayoutDialog, setShowPayoutDialog] = useState(false);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
-  
-  const { data: children, isLoading: childrenLoading } = useChildren();
-  const { data: payouts, isLoading: payoutsLoading } = usePayouts();
-  const { data: settings } = useSettings();
 
-  const isLoading = childrenLoading || payoutsLoading;
+  const { data: children, isLoading: childrenLoading } = useChildren();
+  const { data: completions, isLoading: completionsLoading } = useCompletions();
+  const { data: settings } = useSettings();
+  const pinGate = usePinGuard();
+
+  const isLoading = childrenLoading || completionsLoading;
 
   const formatValueDisplay = (cents: number) => {
     return formatValue(cents, settings?.displayMode);
@@ -37,8 +40,10 @@ export default function TotalsPage() {
   };
 
   const handlePayoutClick = (child: Child) => {
-    setSelectedChild(child);
-    setShowPayoutDialog(true);
+    pinGate.guard(() => {
+      setSelectedChild(child);
+      setShowPayoutDialog(true);
+    });
   };
 
   const globalTotal = children?.reduce((sum, child) => sum + child.totalCents, 0) || 0;
@@ -73,7 +78,9 @@ export default function TotalsPage() {
       {/* Individual Child Totals */}
       <div className="space-y-4">
         {children?.map((child, index) => {
-          const childPayouts = payouts?.filter(p => p.childId === child.id) || [];
+          // Real derived count from the completions ledger, not an estimate
+          // off totalCents (see issue #34: not every chore is worth $1).
+          const childCompletedCount = completions?.filter(c => c.childId === child.id).length || 0;
 
           return (
             <Card key={child.id} className="shadow-soft" data-testid={`card-child-total-${child.id}`}>
@@ -90,7 +97,7 @@ export default function TotalsPage() {
                         {child.name}
                       </h3>
                       <p className="text-brand-grayDark/60 text-sm" data-testid={`text-child-chores-${child.id}`}>
-                        {childPayouts.length} total payouts
+                        {childCompletedCount} {childCompletedCount === 1 ? 'chore' : 'chores'} completed
                       </p>
                     </div>
                   </div>
@@ -129,11 +136,13 @@ export default function TotalsPage() {
         </Card>
       )}
 
-      <PayoutDialog 
-        open={showPayoutDialog} 
+      <PayoutDialog
+        open={showPayoutDialog}
         onOpenChange={setShowPayoutDialog}
         child={selectedChild}
       />
+
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }

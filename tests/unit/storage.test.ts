@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { freshStorage } from './db-helper';
+import { appDataSchema } from '@shared/schema';
 import type { AppData } from '@shared/schema';
 
 describe('AppStorage.createChild', () => {
@@ -24,35 +25,115 @@ describe('AppStorage.createChild', () => {
 });
 
 describe('AppStorage.completeChore', () => {
-  it('adds the chore value to the child balance, cumulatively', async () => {
+  it('adds the chore value to the child balance and records a completion, atomically, cumulatively', async () => {
     const storage = await freshStorage();
     const child = await storage.createChild({ name: 'Aria' });
 
-    const afterFirst = await storage.completeChore(child.id, 250);
-    expect(afterFirst.totalCents).toBe(250);
+    const first = await storage.completeChore(child.id, 'chore-1', 'Vacuum', 250);
+    expect(first.child.totalCents).toBe(250);
+    expect(first.completion.childId).toBe(child.id);
+    expect(first.completion.choreId).toBe('chore-1');
+    expect(first.completion.choreTitle).toBe('Vacuum');
+    expect(first.completion.valueCents).toBe(250);
+    expect(first.completion.id).toBeTruthy();
 
-    const afterSecond = await storage.completeChore(child.id, 100);
-    expect(afterSecond.totalCents).toBe(350);
+    const second = await storage.completeChore(child.id, 'chore-2', 'Mop', 100);
+    expect(second.child.totalCents).toBe(350);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toHaveLength(2);
   });
 
-  it('throws for an unknown child', async () => {
+  it('throws for an unknown child, and records no completion', async () => {
     const storage = await freshStorage();
-    await expect(storage.completeChore('no-such-child', 100)).rejects.toThrow('Child not found');
+    await expect(storage.completeChore('no-such-child', 'chore-1', 'Vacuum', 100)).rejects.toThrow('Child not found');
+    expect(await storage.getAllCompletions()).toEqual([]);
+  });
+
+  it('keeps the chore title as a snapshot, independent of the chore being deleted afterwards', async () => {
+    const storage = await freshStorage();
+    const child = await storage.createChild({ name: 'Aria' });
+    const chore = await storage.createChore({ title: 'Vacuum', valueCents: 500 });
+
+    const { completion } = await storage.completeChore(child.id, chore.id, chore.title, chore.valueCents);
+    await storage.deleteChore(chore.id);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toHaveLength(1);
+    expect(completions[0].id).toBe(completion.id);
+    expect(completions[0].choreTitle).toBe('Vacuum');
+  });
+});
+
+describe('AppStorage.undoCompletion', () => {
+  it('deletes the completion and gives back its value', async () => {
+    const storage = await freshStorage();
+    const child = await storage.createChild({ name: 'Aria' });
+    const { completion } = await storage.completeChore(child.id, 'chore-1', 'Vacuum', 500);
+
+    const updated = await storage.undoCompletion(completion.id);
+    expect(updated.totalCents).toBe(0);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toEqual([]);
+  });
+
+  it('leaves other completions and the rest of the balance untouched', async () => {
+    const storage = await freshStorage();
+    const child = await storage.createChild({ name: 'Aria' });
+    const { completion: first } = await storage.completeChore(child.id, 'chore-1', 'Vacuum', 500);
+    await storage.completeChore(child.id, 'chore-2', 'Mop', 100);
+
+    const updated = await storage.undoCompletion(first.id);
+    expect(updated.totalCents).toBe(100);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toHaveLength(1);
+    expect(completions[0].choreId).toBe('chore-2');
+  });
+
+  // Control for hardening rule 13 (a control must fail on the broken
+  // version): this is the exact scenario the refusal exists to catch - a
+  // payout happened after the completion, so undoing it would drive the
+  // balance negative. Verified to fail against a naive implementation that
+  // unconditionally subtracts valueCents; that inversion was reverted
+  // immediately after and does not ship.
+  it('refuses when the balance has dropped below the completion value (a payout happened since), without touching either store', async () => {
+    const storage = await freshStorage();
+    const child = await storage.createChild({ name: 'Aria' });
+    const { completion } = await storage.completeChore(child.id, 'chore-1', 'Vacuum', 500);
+    await storage.payoutChild(child.id); // balance now 0
+
+    await expect(storage.undoCompletion(completion.id)).rejects.toThrow(
+      'Cannot undo: a payout has already happened since this chore was completed',
+    );
+
+    const childAfter = await storage.getChild(child.id);
+    expect(childAfter?.totalCents).toBe(0);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toHaveLength(1);
+    expect(completions[0].id).toBe(completion.id);
+  });
+
+  it('throws for an unknown completion', async () => {
+    const storage = await freshStorage();
+    await expect(storage.undoCompletion('no-such-completion')).rejects.toThrow('Completion not found');
   });
 });
 
 describe('AppStorage.payoutChild', () => {
-  it('creates a payout row and zeroes the balance', async () => {
+  it('creates a payout row (with no childName field) and zeroes the balance', async () => {
     const storage = await freshStorage();
     const child = await storage.createChild({ name: 'Aria' });
-    await storage.completeChore(child.id, 500);
+    await storage.completeChore(child.id, 'chore-1', 'Vacuum', 500);
 
     const { child: paidChild, payout } = await storage.payoutChild(child.id);
 
     expect(paidChild.totalCents).toBe(0);
     expect(payout.amountCents).toBe(500);
     expect(payout.childId).toBe(child.id);
-    expect(payout.childName).toBe('Aria');
+    expect(payout).not.toHaveProperty('childName');
 
     const payouts = await storage.getAllPayouts();
     expect(payouts).toHaveLength(1);
@@ -73,17 +154,17 @@ describe('AppStorage.payoutChild', () => {
 });
 
 describe('AppStorage.deleteChild', () => {
-  it('removes the child and all of their payouts, leaving other children and payouts intact', async () => {
+  it('removes the child and all of their payouts and completions, leaving other children, payouts and completions intact', async () => {
     const storage = await freshStorage();
     const child = await storage.createChild({ name: 'Aria' });
     const other = await storage.createChild({ name: 'Addie' });
 
-    await storage.completeChore(child.id, 300);
+    await storage.completeChore(child.id, 'chore-1', 'Vacuum', 300);
     await storage.payoutChild(child.id);
-    await storage.completeChore(child.id, 200);
+    await storage.completeChore(child.id, 'chore-2', 'Mop', 200);
     await storage.payoutChild(child.id);
 
-    await storage.completeChore(other.id, 100);
+    await storage.completeChore(other.id, 'chore-3', 'Dishes', 100);
     await storage.payoutChild(other.id);
 
     await storage.deleteChild(child.id);
@@ -95,6 +176,10 @@ describe('AppStorage.deleteChild', () => {
     const payouts = await storage.getAllPayouts();
     expect(payouts.some((p) => p.childId === child.id)).toBe(false);
     expect(payouts.some((p) => p.childId === other.id)).toBe(true);
+
+    const completions = await storage.getAllCompletions();
+    expect(completions.some((c) => c.childId === child.id)).toBe(false);
+    expect(completions.some((c) => c.childId === other.id)).toBe(true);
   });
 });
 
@@ -120,8 +205,29 @@ describe('AppStorage.deleteChore', () => {
   });
 });
 
-describe('AppStorage.importData', () => {
-  it('replaces children, chores and payouts wholesale with a valid backup', async () => {
+describe('AppStorage.exportData / importData round trip', () => {
+  it('carries completions through an export and re-import', async () => {
+    const storage = await freshStorage();
+    const child = await storage.createChild({ name: 'Aria' });
+    const chore = await storage.createChore({ title: 'Vacuum', valueCents: 500 });
+    await storage.completeChore(child.id, chore.id, chore.title, chore.valueCents);
+
+    const exported = await storage.exportData();
+    expect(exported.completions).toHaveLength(1);
+    expect(exported.completions[0].choreTitle).toBe('Vacuum');
+
+    // Import into a second, independent database and confirm the
+    // completion survived the round trip untouched.
+    const storage2 = await freshStorage();
+    await storage2.importData(exported);
+
+    const completions = await storage2.getAllCompletions();
+    expect(completions).toHaveLength(1);
+    expect(completions[0].choreTitle).toBe('Vacuum');
+    expect(completions[0].valueCents).toBe(500);
+  });
+
+  it('replaces children, chores, payouts and completions wholesale with a valid backup', async () => {
     const storage = await freshStorage();
     await storage.createChild({ name: 'Old Kid' });
 
@@ -131,7 +237,10 @@ describe('AppStorage.importData', () => {
       ],
       chores: [{ id: 'ch1', title: 'New Chore', valueCents: 100, createdAt: new Date() }],
       payouts: [
-        { id: 'p1', childId: 'c1', childName: 'New Kid', amountCents: 200, createdAt: new Date() },
+        { id: 'p1', childId: 'c1', amountCents: 200, createdAt: new Date() },
+      ],
+      completions: [
+        { id: 'comp1', childId: 'c1', choreId: 'ch1', choreTitle: 'New Chore', valueCents: 100, createdAt: new Date() },
       ],
       settings: { haptics: false, confetti: false, displayMode: 'points' },
       exportedAt: new Date(),
@@ -153,15 +262,51 @@ describe('AppStorage.importData', () => {
     expect(payouts).toHaveLength(1);
     expect(payouts[0].id).toBe('p1');
 
+    const completions = await storage.getAllCompletions();
+    expect(completions).toHaveLength(1);
+    expect(completions[0].id).toBe('comp1');
+
     const settings = await storage.getSettings();
     expect(settings.displayMode).toBe('points');
   });
 
+  it('imports a legacy backup with no completions field and a payout still carrying childName, dropping the unused field', async () => {
+    const storage = await freshStorage();
+
+    // This is exactly the shape a backup taken before completions and the
+    // childName removal would have: no `completions` key at all, and every
+    // payout still has `childName`.
+    const legacyBackupJson = {
+      children: [
+        { id: 'c1', name: 'Aria', totalCents: 0, favoriteChoreIds: [], createdAt: '2026-01-01T00:00:00.000Z' },
+      ],
+      chores: [],
+      payouts: [
+        { id: 'p1', childId: 'c1', childName: 'Aria', amountCents: 200, createdAt: '2026-01-01T00:00:00.000Z' },
+      ],
+      settings: { haptics: true, confetti: true, displayMode: 'dollars' },
+      exportedAt: '2026-01-02T00:00:00.000Z',
+    };
+
+    const parsed = appDataSchema.parse(legacyBackupJson);
+    expect(parsed.completions).toEqual([]);
+    expect(parsed.payouts[0]).not.toHaveProperty('childName');
+
+    await storage.importData(parsed);
+
+    const payouts = await storage.getAllPayouts();
+    expect(payouts).toHaveLength(1);
+    expect(payouts[0]).not.toHaveProperty('childName');
+
+    const completions = await storage.getAllCompletions();
+    expect(completions).toEqual([]);
+  });
+
   // This is the control for import atomicity. importData clears the
-  // children/chores/payouts stores and repopulates them inside a single
-  // IndexedDB transaction (see AppStorage.importData / withTransaction in
-  // client/src/lib/storage.ts), so a failure partway through must abort the
-  // whole transaction and leave the pre-import data untouched - not
+  // children/chores/payouts/completions stores and repopulates them inside
+  // a single IndexedDB transaction (see AppStorage.importData / withTransaction
+  // in client/src/lib/storage.ts), so a failure partway through must abort
+  // the whole transaction and leave the pre-import data untouched - not
   // "cleared, with only the records that made it in before the failure".
   //
   // The backup below has two children sharing the same id, so the second
@@ -184,6 +329,7 @@ describe('AppStorage.importData', () => {
       ],
       chores: [],
       payouts: [],
+      completions: [],
       settings: { haptics: true, confetti: true, displayMode: 'dollars' },
       exportedAt: new Date(),
     };

@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { log, serveStatic } from "./static";
+import { errorReportingEnabled, reportFault } from "./lib/glitchtip";
+import { ntfyEnabled, BURST_THRESHOLD, BURST_WINDOW_MINUTES } from "./lib/ntfy";
 
 // Content-Security-Policy applied to everything except /api responses (which
 // are JSON, not documents a browser renders). 'unsafe-inline' on style-src
@@ -28,6 +30,24 @@ function checkRequiredEnv() {
     log('Set GITHUB_TOKEN in the environment and redeploy.');
     log('='.repeat(72));
   }
+}
+
+// Alerting is entirely optional and env-gated (issue #61): a deploy with
+// none of it configured must work unchanged. Log the state once at startup
+// so a misconfigured or forgotten env var is visible in `docker logs`
+// straight away, rather than only being noticed the first time it matters.
+function logAlertingStatus() {
+  log(
+    errorReportingEnabled
+      ? 'Error reporting is ENABLED (SENTRY_DSN set): GitHub API failures and unexpected exceptions will be sent to GlitchTip.'
+      : 'Error reporting is DISABLED (SENTRY_DSN not set). Faults will only appear in these logs.',
+  );
+
+  log(
+    ntfyEnabled
+      ? `ntfy alerting is ENABLED (NTFY_URL set): a burst alert fires above ${BURST_THRESHOLD} accepted reports per ${BURST_WINDOW_MINUTES}m, and GitHub API failures alert at most once/hour.`
+      : 'ntfy alerting is DISABLED (NTFY_URL not set). Volume bursts and GitHub failures will only appear in these logs.',
+  );
 }
 
 const app = express();
@@ -93,6 +113,7 @@ app.use((req, res, next) => {
 
 (async () => {
   checkRequiredEnv();
+  logAlertingStatus();
 
   const server = await registerRoutes(app);
 
@@ -102,6 +123,13 @@ app.use((req, res, next) => {
     // Log the full error server-side; never forward internal error detail
     // (stack traces, upstream API URLs, rate-limit info) to the client.
     console.error(`[error] ${req.method} ${req.path} -> ${status}`, err);
+
+    // Best-effort, never fatal: an unhandled exception on any route is a
+    // genuine fault worth having in GlitchTip. This is telemetry, not a
+    // gate, so a reporting failure must never affect the response below.
+    if (status >= 500) {
+      void reportFault({ event: 'unexpected-exception', error: err, tags: { path: req.path, method: req.method } });
+    }
 
     res.status(status).json({ message: "Internal Server Error" });
   });

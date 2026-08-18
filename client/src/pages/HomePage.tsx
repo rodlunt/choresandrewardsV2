@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useChildren, useChores, usePayouts, useSettings } from '@/hooks/use-app-data';
+import { useChildren, useChores, usePayouts, useCompletions, useSettings } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -14,9 +14,10 @@ export default function HomePage() {
   const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: payouts, isLoading: payoutsLoading } = usePayouts();
+  const { data: completions, isLoading: completionsLoading } = useCompletions();
   const { data: settings } = useSettings();
 
-  const isLoading = childrenLoading || choresLoading || payoutsLoading;
+  const isLoading = childrenLoading || choresLoading || payoutsLoading || completionsLoading;
 
   const formatValueDisplay = (cents: number) => {
     return formatValue(cents, settings?.displayMode);
@@ -76,6 +77,9 @@ export default function HomePage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {children?.map((child, index) => {
           const progressPercent = Math.min((child.totalCents / 1000) * 100, 100); // Progress to $10
+          // Real derived count from the completions ledger, not an estimate
+          // off totalCents (see issue #34: not every chore is worth $1).
+          const childDoneCount = completions?.filter(c => c.childId === child.id).length || 0;
 
           return (
             <Link key={child.id} href={`/child/${child.id}`}>
@@ -112,7 +116,7 @@ export default function HomePage() {
                           />
                         </div>
                         <span className="text-xs text-brand-grayDark/60" data-testid={`text-child-progress-${child.id}`}>
-                          toward $10 goal
+                          {childDoneCount} done · toward $10 goal
                         </span>
                       </div>
                     </div>
