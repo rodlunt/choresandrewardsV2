@@ -32,10 +32,17 @@ function checkRequiredEnv() {
 
 const app = express();
 
-// The app runs behind Caddy and Cloudflare. Trust the first proxy hop so
-// req.ip (and therefore the rate limiter's key) reflects the real client
-// address instead of the reverse proxy's.
-app.set('trust proxy', 1);
+// The app sits behind exactly two proxies: Cloudflare (which appends the
+// real client IP to X-Forwarded-For) then Caddy (which appends the CF edge
+// address). Trusting two hops makes req.ip, and therefore the rate
+// limiter's key, resolve to the client Cloudflare recorded, even when a
+// caller sends a forged X-Forwarded-For through Cloudflare. With only one
+// hop trusted, req.ip was the CF edge and the limiter pooled unrelated
+// users per edge. Known residual: a request that reaches Caddy directly,
+// bypassing Cloudflare, can spoof req.ip with a forged header; the only
+// thing keyed off req.ip is the rate limiter, so the exposure is limit
+// evasion, nothing else.
+app.set('trust proxy', 2);
 
 // Don't advertise the framework.
 app.disable('x-powered-by');
