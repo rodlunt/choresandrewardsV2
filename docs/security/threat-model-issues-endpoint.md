@@ -31,6 +31,8 @@ using a fine-grained PAT from the server `.env`.
 | Oversized bodies | 10 MB JSON body limit |
 | Backend fingerprinting via errors | Generic error messages only; details go to server logs; `x-powered-by` disabled |
 | Token theft via server compromise | Token scope limits blast radius to the intake repo; rotation at most 90 days out |
+| Abuse spread across many clients (under the per-IP limit) | Structured logs for every rejection/failure category, plus an ntfy burst alert when accepted submissions exceed a threshold in a rolling window (see `docs/security/alerting-setup.md`) |
+| Silent GitHub integration failure (reports lost, nobody notices) | `github-api-failure` events are logged, reported to GlitchTip, and alert via ntfy (throttled to 1/hour) |
 | Publishing family data | Intake repo is private; the form discloses that reports are private; public issues are written by hand, sanitised (see the access policy) |
 
 ## Accepted residual risks
@@ -42,5 +44,7 @@ using a fine-grained PAT from the server `.env`.
   this traffic level.
 - No CAPTCHA or auth on submission: deliberate, to keep the report path frictionless for
   family and visitors. The rate limit and private intake bound the damage.
-- Abuse is currently detected by noticing, not by alerting; issue #61 tracks wiring
-  endpoint failures and volume bursts into GlitchTip and ntfy.
+- Alerting delivery (GlitchTip, ntfy) is itself best-effort: if either is unreachable the
+  request path is unaffected and the failure is only visible in container logs. Both default
+  off, so a deploy that never sets `SENTRY_DSN` / `NTFY_URL` gets no alerting at all, only the
+  structured logs. See `docs/security/alerting-setup.md` (issue #61).
