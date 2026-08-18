@@ -1,13 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useUndoCompletion, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
 import AddChoreDialog from '@/components/AddChoreDialog';
+import PinPromptDialog from '@/components/PinPromptDialog';
 import { formatValue } from '@/lib/format';
 import { ArrowLeft, Check, DollarSign, Edit, Trash2, Plus, Star } from 'lucide-react';
 import { Chore } from '@shared/schema';
@@ -27,10 +30,12 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: settings } = useSettings();
   const completeChore = useCompleteChore();
+  const undoCompletion = useUndoCompletion();
   const deleteChore = useDeleteChore();
   const toggleFavorite = useToggleFavoriteChore(childId);
   const { choreFeedback } = useFeedback();
   const { toast } = useToast();
+  const pinGate = usePinGuard();
 
   // Reset UI state when childId changes (navigating between children)
   useEffect(() => {
@@ -66,17 +71,38 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     if (!child) return;
 
     try {
-      await completeChore.mutateAsync({ childId: child.id, choreValueCents });
+      const { completion } = await completeChore.mutateAsync({ childId: child.id, choreId, choreTitle, choreValueCents });
       await choreFeedback();
 
       toast({
         title: "🎉 Great job!",
         description: `${choreTitle} completed! +${formatValueDisplay(choreValueCents)}`,
+        action: (
+          <ToastAction altText="Undo" onClick={() => handleUndoCompletion(completion.id, choreTitle)}>
+            Undo
+          </ToastAction>
+        ),
       });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to complete chore",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUndoCompletion = async (completionId: string, choreTitle: string) => {
+    try {
+      await undoCompletion.mutateAsync(completionId);
+      toast({
+        title: "Undone",
+        description: `"${choreTitle}" completion has been undone`,
+      });
+    } catch (error) {
+      toast({
+        title: "Can't undo",
+        description: error instanceof Error ? error.message : "Failed to undo the completion",
         variant: "destructive",
       });
     }
@@ -238,7 +264,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                       <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
                     </Button>
                   <Button
-                    onClick={() => handleEditChore(chore)}
+                    onClick={() => pinGate.guard(() => handleEditChore(chore))}
                     variant="outline"
                     size="sm"
                     className="p-2 hover:bg-brand-grayLight"
@@ -248,7 +274,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                     <Edit className="w-4 h-4" />
                   </Button>
                   <Button
-                    onClick={() => handleDeleteChore(chore.id, chore.title)}
+                    onClick={() => pinGate.guard(() => handleDeleteChore(chore.id, chore.title))}
                     variant="outline"
                     size="sm"
                     className="p-2 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
@@ -312,7 +338,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
                   {formatValueDisplay(child.totalCents)}
                 </div>
                 <Button
-                  onClick={() => setShowPayoutDialog(true)}
+                  onClick={() => pinGate.guard(() => setShowPayoutDialog(true))}
                   className="bg-white text-brand-coral px-6 py-2 rounded-xl font-medium mt-2 hover:bg-white/90"
                   data-testid="button-payout"
                 >
@@ -331,11 +357,13 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
         child={child}
       />
 
-      <AddChoreDialog 
-        open={showAddChore} 
+      <AddChoreDialog
+        open={showAddChore}
         onOpenChange={setShowAddChore}
         existingChore={editingChore}
       />
+
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }

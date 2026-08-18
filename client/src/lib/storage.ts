@@ -1,5 +1,5 @@
 import { getDB } from './db';
-import { Child, Chore, Payout, Settings, InsertChild, InsertChore, InsertPayout, AppData } from '@shared/schema';
+import { Child, Chore, Payout, Completion, Settings, InsertChild, InsertChore, InsertPayout, AppData } from '@shared/schema';
 import { nanoid } from 'nanoid';
 
 // idb creates a transaction's `tx.done` promise as soon as the transaction
@@ -88,19 +88,27 @@ export class AppStorage {
 
   async deleteChild(id: string): Promise<void> {
     const db = await getDB();
-    const tx = db.transaction(['children', 'payouts'], 'readwrite');
+    const tx = db.transaction(['children', 'payouts', 'completions'], 'readwrite');
     const childrenStore = tx.objectStore('children');
     const payoutsStore = tx.objectStore('payouts');
+    const completionsStore = tx.objectStore('completions');
 
     await withTransaction(tx, async () => {
       await childrenStore.delete(id);
 
-      // Also delete all payouts for this child, in the same transaction so
-      // the child and their payout history are removed together or not at all.
+      // Also delete all payouts and completions for this child, in the same
+      // transaction so the child and their history are removed together or
+      // not at all.
       const allPayouts = await payoutsStore.getAll();
       const childPayouts = allPayouts.filter(p => p.childId === id);
       for (const payout of childPayouts) {
         await payoutsStore.delete(payout.id);
+      }
+
+      const allCompletions = await completionsStore.getAll();
+      const childCompletions = allCompletions.filter(c => c.childId === id);
+      for (const completion of childCompletions) {
+        await completionsStore.delete(completion.id);
       }
     });
   }
@@ -190,6 +198,15 @@ export class AppStorage {
     return payout;
   }
 
+  // Completion operations
+  async getAllCompletions(): Promise<Completion[]> {
+    const db = await getDB();
+    const completions = await db.getAll('completions');
+    return completions
+      .map(coerceDate)
+      .sort((a: Completion, b: Completion) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
   // Settings operations
   async getSettings(): Promise<Settings> {
     try {
@@ -215,10 +232,11 @@ export class AppStorage {
 
   // Data export/import
   async exportData(): Promise<AppData> {
-    const [children, chores, payouts, settings] = await Promise.all([
+    const [children, chores, payouts, completions, settings] = await Promise.all([
       this.getAllChildren(),
       this.getAllChores(),
       this.getAllPayouts(),
+      this.getAllCompletions(),
       this.getSettings(),
     ]);
 
@@ -226,6 +244,7 @@ export class AppStorage {
       children,
       chores,
       payouts,
+      completions,
       settings,
       exportedAt: new Date(),
     };
@@ -233,13 +252,16 @@ export class AppStorage {
 
   // `data` is expected to have already been validated (and its date fields
   // coerced) by appDataSchema.safeParse at the call site (see SettingsPage's
-  // handleImport), so it's safe to write as-is.
+  // handleImport), so it's safe to write as-is. `data.completions` defaults
+  // to [] via appDataSchema, so a legacy backup taken before completions
+  // existed still imports cleanly.
   async importData(data: AppData): Promise<void> {
     const db = await getDB();
-    const tx = db.transaction(['children', 'chores', 'payouts'], 'readwrite');
+    const tx = db.transaction(['children', 'chores', 'payouts', 'completions'], 'readwrite');
     const childrenStore = tx.objectStore('children');
     const choresStore = tx.objectStore('chores');
     const payoutsStore = tx.objectStore('payouts');
+    const completionsStore = tx.objectStore('completions');
 
     await withTransaction(tx, async () => {
       // Clear existing data and repopulate inside the same transaction, so a
@@ -248,6 +270,7 @@ export class AppStorage {
       await childrenStore.clear();
       await choresStore.clear();
       await payoutsStore.clear();
+      await completionsStore.clear();
 
       for (const child of data.children) {
         await childrenStore.add(child);
@@ -258,6 +281,9 @@ export class AppStorage {
       for (const payout of data.payouts) {
         await payoutsStore.add(payout);
       }
+      for (const completion of data.completions) {
+        await completionsStore.add(completion);
+      }
     });
 
     // Settings live in a separate store and are written after the main
@@ -266,22 +292,76 @@ export class AppStorage {
   }
 
   // Utility methods
-  async completeChore(childId: string, choreValueCents: number): Promise<Child> {
+  // Atomically increments the child's balance and records the completion
+  // that earned it, in one transaction, so a completion can never exist
+  // without the balance reflecting it (or vice versa). choreTitle is a
+  // snapshot: chores are deletable, so the completion needs its own copy of
+  // the title to stay meaningful after the chore itself is gone.
+  async completeChore(childId: string, choreId: string, choreTitle: string, valueCents: number): Promise<{ child: Child; completion: Completion }> {
     const db = await getDB();
-    const tx = db.transaction('children', 'readwrite');
-    const store = tx.objectStore('children');
+    const tx = db.transaction(['children', 'completions'], 'readwrite');
+    const childrenStore = tx.objectStore('children');
+    const completionsStore = tx.objectStore('completions');
 
     return withTransaction(tx, async () => {
-      const child = await store.get(childId);
+      const child = await childrenStore.get(childId);
       if (!child) {
         throw new Error('Child not found');
       }
 
       const updatedChild: Child = {
         ...child,
-        totalCents: child.totalCents + choreValueCents,
+        totalCents: child.totalCents + valueCents,
       };
-      await store.put(updatedChild);
+      await childrenStore.put(updatedChild);
+
+      const completion: Completion = {
+        id: nanoid(),
+        childId,
+        choreId,
+        choreTitle,
+        valueCents,
+        createdAt: new Date(),
+      };
+      await completionsStore.add(completion);
+
+      return { child: updatedChild, completion };
+    });
+  }
+
+  // Reverses a single completion: deletes the completion row and gives back
+  // its value in one transaction. Refuses (without touching either store) if
+  // the child's current balance is lower than the completion's value, which
+  // means a payout happened since the completion and undoing it would drive
+  // the balance negative.
+  async undoCompletion(completionId: string): Promise<Child> {
+    const db = await getDB();
+    const tx = db.transaction(['children', 'completions'], 'readwrite');
+    const childrenStore = tx.objectStore('children');
+    const completionsStore = tx.objectStore('completions');
+
+    return withTransaction(tx, async () => {
+      const completion = await completionsStore.get(completionId);
+      if (!completion) {
+        throw new Error('Completion not found');
+      }
+
+      const child = await childrenStore.get(completion.childId);
+      if (!child) {
+        throw new Error('Child not found');
+      }
+
+      if (child.totalCents < completion.valueCents) {
+        throw new Error('Cannot undo: a payout has already happened since this chore was completed');
+      }
+
+      await completionsStore.delete(completionId);
+
+      const updatedChild: Child = {
+        ...child,
+        totalCents: child.totalCents - completion.valueCents,
+      };
+      await childrenStore.put(updatedChild);
 
       return updatedChild;
     });
@@ -306,7 +386,6 @@ export class AppStorage {
       const payout: Payout = {
         id: nanoid(),
         childId: child.id,
-        childName: child.name,
         amountCents: child.totalCents,
         createdAt: new Date(),
       };

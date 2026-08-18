@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useChores, useDeleteChore } from '@/hooks/use-app-data';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChoreDialog from '@/components/AddChoreDialog';
+import PinPromptDialog from '@/components/PinPromptDialog';
 import { formatValue } from '@/lib/format';
 import { Chore } from '@shared/schema';
 import { Plus, Edit, Trash2, ListTodo } from 'lucide-react';
@@ -18,6 +20,7 @@ export default function ChoresPage() {
   const { data: settings } = useSettings();
   const deleteChore = useDeleteChore();
   const { toast } = useToast();
+  const pinGate = usePinGuard();
 
   const formatValueDisplay = (cents: number) => {
     return formatValue(cents, settings?.displayMode);
@@ -105,7 +108,7 @@ export default function ChoresPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleEditChore(chore)}
+                    onClick={() => pinGate.guard(() => handleEditChore(chore))}
                     className="text-brand-grayDark/60 hover:text-brand-grayDark hover:bg-brand-grayLight"
                     data-testid={`button-edit-chore-${chore.id}`}
                   >
@@ -114,7 +117,7 @@ export default function ChoresPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteChore(chore.id, chore.title)}
+                    onClick={() => pinGate.guard(() => handleDeleteChore(chore.id, chore.title))}
                     className="text-brand-coral/60 hover:text-brand-coral hover:bg-brand-coral/10"
                     data-testid={`button-delete-chore-${chore.id}`}
                   >
@@ -130,11 +133,13 @@ export default function ChoresPage() {
         </CardContent>
       </Card>
 
-      <AddChoreDialog 
-        open={showAddChore} 
+      <AddChoreDialog
+        open={showAddChore}
         onOpenChange={handleCloseChoreDialog}
         existingChore={editingChore}
       />
+
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }
