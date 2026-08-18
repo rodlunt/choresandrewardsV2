@@ -2,45 +2,64 @@ import { getDB } from './db';
 import { Child, Chore, Payout, Settings, InsertChild, InsertChore, InsertPayout, AppData } from '@shared/schema';
 import { nanoid } from 'nanoid';
 
+// idb creates a transaction's `tx.done` promise as soon as the transaction
+// is opened, listening for the underlying IDBTransaction's
+// complete/error/abort events - independent of whether calling code ever
+// awaits it. If a store operation inside the transaction throws, our
+// methods below return via that throw without reaching their own
+// `await tx.done`, but the already-created `tx.done` promise still settles
+// (and, on an aborted transaction, rejects) in the background. Left alone
+// that surfaces as a second, unhandled promise rejection alongside the
+// error we already threw. This drains it quietly and rethrows the
+// original error, so a failed atomic write reports exactly once.
+async function withTransaction<R>(tx: { done: Promise<void> }, work: () => Promise<R>): Promise<R> {
+  try {
+    const result = await work();
+    await tx.done;
+    return result;
+  } catch (err) {
+    await tx.done.catch(() => {});
+    throw err;
+  }
+}
+
 export class AppStorage {
   // Children operations
   async getAllChildren(): Promise<Child[]> {
     const db = await getDB();
-    const children = await db.getAll('children');
-
-    // Normalize dates in case they were stored as strings (from JSON import)
-    return children.map((c: Child) => ({
-      ...c,
-      createdAt: c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt)
-    }));
+    return db.getAll('children');
   }
 
   async getChild(id: string): Promise<Child | undefined> {
     const db = await getDB();
-    const child = await db.get('children', id);
-
-    // Normalize dates in case they were stored as strings (from JSON import)
-    if (child) {
-      return {
-        ...child,
-        createdAt: child.createdAt instanceof Date ? child.createdAt : new Date(child.createdAt)
-      };
-    }
-
-    return child;
+    return db.get('children', id);
   }
 
   async createChild(data: InsertChild): Promise<Child> {
     const db = await getDB();
-    const child: Child = {
-      ...data,
-      id: nanoid(),
-      totalCents: 0,
-      favoriteChoreIds: [],
-      createdAt: new Date(),
-    };
-    await db.add('children', child);
-    return child;
+    const tx = db.transaction('children', 'readwrite');
+    const store = tx.objectStore('children');
+
+    return withTransaction(tx, async () => {
+      // Case-insensitive, trimmed duplicate-name check inside the same
+      // transaction as the add, so a concurrent create can't race past it.
+      const existingChildren = await store.getAll();
+      const trimmedName = data.name.trim();
+      const normalizedName = trimmedName.toLowerCase();
+      if (existingChildren.some(c => c.name.trim().toLowerCase() === normalizedName)) {
+        throw new Error(`A child named "${trimmedName}" already exists`);
+      }
+
+      const child: Child = {
+        ...data,
+        id: nanoid(),
+        totalCents: 0,
+        favoriteChoreIds: [],
+        createdAt: new Date(),
+      };
+      await store.add(child);
+      return child;
+    });
   }
 
   async updateChild(id: string, updates: Partial<Child>): Promise<Child> {
@@ -56,41 +75,32 @@ export class AppStorage {
 
   async deleteChild(id: string): Promise<void> {
     const db = await getDB();
-    await db.delete('children', id);
-    
-    // Also delete all payouts for this child
-    const allPayouts = await db.getAll('payouts');
-    const childPayouts = allPayouts.filter(p => p.childId === id);
-    for (const payout of childPayouts) {
-      await db.delete('payouts', payout.id);
-    }
+    const tx = db.transaction(['children', 'payouts'], 'readwrite');
+    const childrenStore = tx.objectStore('children');
+    const payoutsStore = tx.objectStore('payouts');
+
+    await withTransaction(tx, async () => {
+      await childrenStore.delete(id);
+
+      // Also delete all payouts for this child, in the same transaction so
+      // the child and their payout history are removed together or not at all.
+      const allPayouts = await payoutsStore.getAll();
+      const childPayouts = allPayouts.filter(p => p.childId === id);
+      for (const payout of childPayouts) {
+        await payoutsStore.delete(payout.id);
+      }
+    });
   }
 
   // Chores operations
   async getAllChores(): Promise<Chore[]> {
     const db = await getDB();
-    const chores = await db.getAll('chores');
-
-    // Normalize dates in case they were stored as strings (from JSON import)
-    return chores.map((c: Chore) => ({
-      ...c,
-      createdAt: c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt)
-    }));
+    return db.getAll('chores');
   }
 
   async getChore(id: string): Promise<Chore | undefined> {
     const db = await getDB();
-    const chore = await db.get('chores', id);
-
-    // Normalize dates in case they were stored as strings (from JSON import)
-    if (chore) {
-      return {
-        ...chore,
-        createdAt: chore.createdAt instanceof Date ? chore.createdAt : new Date(chore.createdAt)
-      };
-    }
-
-    return chore;
+    return db.get('chores', id);
   }
 
   async createChore(data: InsertChore): Promise<Chore> {
@@ -117,34 +127,39 @@ export class AppStorage {
 
   async deleteChore(id: string): Promise<void> {
     const db = await getDB();
-    await db.delete('chores', id);
+    const tx = db.transaction(['chores', 'children'], 'readwrite');
+    const choresStore = tx.objectStore('chores');
+    const childrenStore = tx.objectStore('children');
+
+    await withTransaction(tx, async () => {
+      await choresStore.delete(id);
+
+      // Strip the deleted chore id from every child's favoriteChoreIds so
+      // dangling references don't accumulate, in the same transaction as the delete.
+      const allChildren = await childrenStore.getAll();
+      for (const child of allChildren) {
+        const favoriteChoreIds = child.favoriteChoreIds || [];
+        if (favoriteChoreIds.includes(id)) {
+          await childrenStore.put({
+            ...child,
+            favoriteChoreIds: favoriteChoreIds.filter(choreId => choreId !== id),
+          });
+        }
+      }
+    });
   }
 
   // Payout operations
   async getAllPayouts(): Promise<Payout[]> {
     const db = await getDB();
     const payouts = await db.getAll('payouts');
-
-    // Normalize dates in case they were stored as strings (from JSON import)
-    const normalized = payouts.map((p: Payout) => ({
-      ...p,
-      createdAt: p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt)
-    }));
-
-    return normalized.sort((a: Payout, b: Payout) => b.createdAt.getTime() - a.createdAt.getTime());
+    return payouts.sort((a: Payout, b: Payout) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getPayoutsForChild(childId: string): Promise<Payout[]> {
     const db = await getDB();
     const allPayouts = await db.getAll('payouts');
-
-    // Normalize dates and filter
-    return allPayouts
-      .filter(p => p.childId === childId)
-      .map((p: Payout) => ({
-        ...p,
-        createdAt: p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt)
-      }));
+    return allPayouts.filter(p => p.childId === childId);
   }
 
   async createPayout(data: InsertPayout): Promise<Payout> {
@@ -199,69 +214,92 @@ export class AppStorage {
     };
   }
 
+  // `data` is expected to have already been validated (and its date fields
+  // coerced) by appDataSchema.safeParse at the call site (see SettingsPage's
+  // handleImport), so it's safe to write as-is.
   async importData(data: AppData): Promise<void> {
     const db = await getDB();
+    const tx = db.transaction(['children', 'chores', 'payouts'], 'readwrite');
+    const childrenStore = tx.objectStore('children');
+    const choresStore = tx.objectStore('chores');
+    const payoutsStore = tx.objectStore('payouts');
 
-    // Clear existing data
-    await db.clear('children');
-    await db.clear('chores');
-    await db.clear('payouts');
+    await withTransaction(tx, async () => {
+      // Clear existing data and repopulate inside the same transaction, so a
+      // failure partway through rolls everything back instead of leaving the
+      // stores cleared with only some of the import applied.
+      await childrenStore.clear();
+      await choresStore.clear();
+      await payoutsStore.clear();
 
-    // Import new data with date normalization
-    // (JSON.parse converts dates to strings, we need to convert them back to Date objects)
-    for (const child of data.children) {
-      await db.add('children', {
-        ...child,
-        createdAt: child.createdAt instanceof Date ? child.createdAt : new Date(child.createdAt)
-      });
-    }
-    for (const chore of data.chores) {
-      await db.add('chores', {
-        ...chore,
-        createdAt: chore.createdAt instanceof Date ? chore.createdAt : new Date(chore.createdAt)
-      });
-    }
-    for (const payout of data.payouts) {
-      await db.add('payouts', {
-        ...payout,
-        createdAt: payout.createdAt instanceof Date ? payout.createdAt : new Date(payout.createdAt)
-      });
-    }
+      for (const child of data.children) {
+        await childrenStore.add(child);
+      }
+      for (const chore of data.chores) {
+        await choresStore.add(chore);
+      }
+      for (const payout of data.payouts) {
+        await payoutsStore.add(payout);
+      }
+    });
 
+    // Settings live in a separate store and are written after the main
+    // transaction commits, as before.
     await this.updateSettings(data.settings);
   }
 
   // Utility methods
   async completeChore(childId: string, choreValueCents: number): Promise<Child> {
-    const child = await this.getChild(childId);
-    if (!child) {
-      throw new Error('Child not found');
-    }
+    const db = await getDB();
+    const tx = db.transaction('children', 'readwrite');
+    const store = tx.objectStore('children');
 
-    return this.updateChild(childId, {
-      totalCents: child.totalCents + choreValueCents,
+    return withTransaction(tx, async () => {
+      const child = await store.get(childId);
+      if (!child) {
+        throw new Error('Child not found');
+      }
+
+      const updatedChild: Child = {
+        ...child,
+        totalCents: child.totalCents + choreValueCents,
+      };
+      await store.put(updatedChild);
+
+      return updatedChild;
     });
   }
 
   async payoutChild(childId: string): Promise<{ child: Child; payout: Payout }> {
-    const child = await this.getChild(childId);
-    if (!child) {
-      throw new Error('Child not found');
-    }
+    const db = await getDB();
+    const tx = db.transaction(['payouts', 'children'], 'readwrite');
+    const childrenStore = tx.objectStore('children');
+    const payoutsStore = tx.objectStore('payouts');
 
-    if (child.totalCents === 0) {
-      throw new Error('No amount to pay out');
-    }
+    return withTransaction(tx, async () => {
+      const child = await childrenStore.get(childId);
+      if (!child) {
+        throw new Error('Child not found');
+      }
 
-    const payout = await this.createPayout({
-      childId: child.id,
-      childName: child.name,
-      amountCents: child.totalCents,
+      if (child.totalCents === 0) {
+        throw new Error('No amount to pay out');
+      }
+
+      const payout: Payout = {
+        id: nanoid(),
+        childId: child.id,
+        childName: child.name,
+        amountCents: child.totalCents,
+        createdAt: new Date(),
+      };
+      await payoutsStore.add(payout);
+
+      const updatedChild: Child = { ...child, totalCents: 0 };
+      await childrenStore.put(updatedChild);
+
+      return { child: updatedChild, payout };
     });
-
-    const updatedChild = await this.updateChild(childId, { totalCents: 0 });
-
-    return { child: updatedChild, payout };
   }
 
   // Favorite chores operations (per-child)

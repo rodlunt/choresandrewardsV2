@@ -39,7 +39,7 @@ export default function AddChildDialog({ open, onOpenChange }: AddChildDialogPro
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add child",
+        description: error instanceof Error && error.message ? error.message : "Failed to add child",
         variant: "destructive",
       });
     }

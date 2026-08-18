@@ -37,7 +37,7 @@ export default function FirstRunPage({ onComplete }: FirstRunPageProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add child",
+        description: error instanceof Error && error.message ? error.message : "Failed to add child",
         variant: "destructive",
       });
     }
