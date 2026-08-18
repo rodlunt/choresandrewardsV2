@@ -127,6 +127,18 @@ export function useCompleteChore() {
   });
 }
 
+export function useUndoCompletion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (completionId: string) => storage.undoCompletion(completionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      queryClient.invalidateQueries({ queryKey: ['completions'] });
+    },
+  });
+}
+
 export function usePayoutChild() {
   const queryClient = useQueryClient();
   

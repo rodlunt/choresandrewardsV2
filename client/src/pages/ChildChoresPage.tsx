@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useChild, useChores, useCompleteChore, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
+import { useChild, useChores, useCompleteChore, useUndoCompletion, useDeleteChore, useSettings, useToggleFavoriteChore } from '@/hooks/use-app-data';
 import { useFeedback } from '@/hooks/use-feedback';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
@@ -27,6 +28,7 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
   const { data: chores, isLoading: choresLoading } = useChores();
   const { data: settings } = useSettings();
   const completeChore = useCompleteChore();
+  const undoCompletion = useUndoCompletion();
   const deleteChore = useDeleteChore();
   const toggleFavorite = useToggleFavoriteChore(childId);
   const { choreFeedback } = useFeedback();
@@ -66,17 +68,38 @@ export default function ChildChoresPage({ childId }: ChildChoresPageProps) {
     if (!child) return;
 
     try {
-      await completeChore.mutateAsync({ childId: child.id, choreId, choreTitle, choreValueCents });
+      const { completion } = await completeChore.mutateAsync({ childId: child.id, choreId, choreTitle, choreValueCents });
       await choreFeedback();
 
       toast({
         title: "🎉 Great job!",
         description: `${choreTitle} completed! +${formatValueDisplay(choreValueCents)}`,
+        action: (
+          <ToastAction altText="Undo" onClick={() => handleUndoCompletion(completion.id, choreTitle)}>
+            Undo
+          </ToastAction>
+        ),
       });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to complete chore",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUndoCompletion = async (completionId: string, choreTitle: string) => {
+    try {
+      await undoCompletion.mutateAsync(completionId);
+      toast({
+        title: "Undone",
+        description: `"${choreTitle}" completion has been undone`,
+      });
+    } catch (error) {
+      toast({
+        title: "Can't undo",
+        description: error instanceof Error ? error.message : "Failed to undo the completion",
         variant: "destructive",
       });
     }
