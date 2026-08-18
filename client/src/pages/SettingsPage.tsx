@@ -6,9 +6,12 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
-import { Settings } from '@shared/schema';
+import { Settings, appDataSchema } from '@shared/schema';
 import { formatValue } from '@/lib/format';
 import { Plus, Edit2, Trash2, Download, Upload, Users } from 'lucide-react';
+
+// Shared with App.tsx's backup reminder check.
+export const LAST_EXPORT_STORAGE_KEY = 'chores-rewards-last-export';
 
 export default function SettingsPage() {
   const [showAddChild, setShowAddChild] = useState(false);
@@ -90,7 +93,9 @@ export default function SettingsPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
+      localStorage.setItem(LAST_EXPORT_STORAGE_KEY, String(Date.now()));
+
       toast({
         title: "Export Complete",
         description: "Your data has been exported successfully",
@@ -113,12 +118,32 @@ export default function SettingsPage() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
+      let parsedJson: unknown;
       try {
         const text = await file.text();
-        const data = JSON.parse(text);
-        
-        await importData.mutateAsync(data);
-        
+        parsedJson = JSON.parse(text);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "This file is not a valid Chores and Rewards backup",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = appDataSchema.safeParse(parsedJson);
+      if (!result.success) {
+        toast({
+          title: "Error",
+          description: "This file is not a valid Chores and Rewards backup",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        await importData.mutateAsync(result.data);
+
         toast({
           title: "Import Complete",
           description: "Your data has been imported successfully",

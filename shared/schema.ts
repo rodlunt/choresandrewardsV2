@@ -6,7 +6,7 @@ export const childSchema = z.object({
   name: z.string().min(1, "Name is required"),
   totalCents: z.number().int().min(0).default(0),
   favoriteChoreIds: z.array(z.string()).default([]),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
 });
 
 export const insertChildSchema = childSchema.omit({
@@ -24,7 +24,7 @@ export const choreSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Title is required"),
   valueCents: z.number().int().min(1, "Value must be at least 1 cent"),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
 });
 
 export const insertChoreSchema = choreSchema.omit({
@@ -41,7 +41,7 @@ export const payoutSchema = z.object({
   childId: z.string(),
   childName: z.string(),
   amountCents: z.number().int().min(0),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
 });
 
 export const insertPayoutSchema = payoutSchema.omit({ 
@@ -67,7 +67,7 @@ export const appDataSchema = z.object({
   chores: z.array(choreSchema),
   payouts: z.array(payoutSchema),
   settings: settingsSchema,
-  exportedAt: z.date(),
+  exportedAt: z.coerce.date(),
 });
 
 export type AppData = z.infer<typeof appDataSchema>;

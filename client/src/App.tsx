@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useChildren } from '@/hooks/use-app-data';
+import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import FirstRunPage from '@/pages/FirstRunPage';
 import HomePage from '@/pages/HomePage';
@@ -12,17 +13,22 @@ import ChildChoresPage from '@/pages/ChildChoresPage';
 import ChoresPage from '@/pages/ChoresPage';
 import TotalsPage from '@/pages/TotalsPage';
 import HistoryPage from '@/pages/HistoryPage';
-import SettingsPage from '@/pages/SettingsPage';
+import SettingsPage, { LAST_EXPORT_STORAGE_KEY } from '@/pages/SettingsPage';
 import { Users, DollarSign, History, Settings, ListTodo } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import Footer from '@/components/Footer';
 import FeedbackButton from '@/components/FeedbackButton';
 import BuyMeCoffeeBanner from '@/components/BuyMeCoffeeBanner';
 
+const BACKUP_REMINDER_SHOWN_KEY = 'chores-rewards-backup-reminder-shown';
+const BACKUP_REMINDER_STALE_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
+const BACKUP_REMINDER_THROTTLE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
 function AppContent() {
   const [location] = useLocation();
   const { data: children, isLoading } = useChildren();
   const [showFirstRun, setShowFirstRun] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoading && children?.length === 0) {
@@ -37,7 +43,39 @@ function AppContent() {
         .then(() => console.log('Service Worker registered'))
         .catch(err => console.log('Service Worker registration failed', err));
     }
+
+    // Request persistent storage so the browser is less likely to evict
+    // IndexedDB under storage pressure. Best-effort, no UI: whether it was
+    // granted is only ever surfaced to the console.
+    if (navigator.storage?.persist) {
+      navigator.storage.persist().then((granted) => {
+        console.info('Persistent storage granted:', granted);
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    // Gentle backup reminder: only once there is family data to lose, and
+    // at most once every 14 days, so it doesn't nag on every launch.
+    if (isLoading || !children || children.length === 0) {
+      return;
+    }
+
+    const now = Date.now();
+    const lastExport = Number(localStorage.getItem(LAST_EXPORT_STORAGE_KEY)) || 0;
+    const lastReminder = Number(localStorage.getItem(BACKUP_REMINDER_SHOWN_KEY)) || 0;
+
+    const exportIsStale = lastExport === 0 || now - lastExport > BACKUP_REMINDER_STALE_MS;
+    const reminderDue = now - lastReminder > BACKUP_REMINDER_THROTTLE_MS;
+
+    if (exportIsStale && reminderDue) {
+      toast({
+        title: "Back up your data",
+        description: "It's been a while since your last backup. Head to Settings > Export Backup to keep your family's data safe.",
+      });
+      localStorage.setItem(BACKUP_REMINDER_SHOWN_KEY, String(now));
+    }
+  }, [children, isLoading, toast]);
 
   if (isLoading) {
     return <LoadingSpinner className="min-h-screen" />;
