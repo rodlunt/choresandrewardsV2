@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useChildren, useCompletions, useSettings } from '@/hooks/use-app-data';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import PayoutDialog from '@/components/PayoutDialog';
+import PinPromptDialog from '@/components/PinPromptDialog';
 import { Child } from '@shared/schema';
 import { formatValue } from '@/lib/format';
 import { DollarSign, Users } from 'lucide-react';
@@ -15,6 +17,7 @@ export default function TotalsPage() {
   const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: completions, isLoading: completionsLoading } = useCompletions();
   const { data: settings } = useSettings();
+  const pinGate = usePinGuard();
 
   const isLoading = childrenLoading || completionsLoading;
 
@@ -37,8 +40,10 @@ export default function TotalsPage() {
   };
 
   const handlePayoutClick = (child: Child) => {
-    setSelectedChild(child);
-    setShowPayoutDialog(true);
+    pinGate.guard(() => {
+      setSelectedChild(child);
+      setShowPayoutDialog(true);
+    });
   };
 
   const globalTotal = children?.reduce((sum, child) => sum + child.totalCents, 0) || 0;
@@ -131,11 +136,13 @@ export default function TotalsPage() {
         </Card>
       )}
 
-      <PayoutDialog 
-        open={showPayoutDialog} 
+      <PayoutDialog
+        open={showPayoutDialog}
         onOpenChange={setShowPayoutDialog}
         child={selectedChild}
       />
+
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }

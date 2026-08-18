@@ -78,6 +78,12 @@ export const settingsSchema = z.object({
   haptics: z.boolean().default(true),
   confetti: z.boolean().default(true),
   displayMode: z.enum(['dollars', 'points']).default('dollars'),
+  // Optional parent PIN, stored only as a salted SHA-256 hash (see
+  // client/src/lib/pin.ts) - never the PIN itself. Both fields are present
+  // together or absent together; undefined means no PIN is set and every
+  // gated action behaves exactly as if PINs didn't exist.
+  pinHash: z.string().optional(),
+  pinSalt: z.string().optional(),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useChildren, useChores, usePayouts, useSettings, useDeleteChild, useUpdateSettings, useExportData, useImportData } from '@/hooks/use-app-data';
+import { usePinGuard } from '@/hooks/use-pin-guard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -16,10 +17,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AddChildDialog from '@/components/AddChildDialog';
+import PinPromptDialog from '@/components/PinPromptDialog';
+import PinSetupDialog from '@/components/PinSetupDialog';
 import { Settings, appDataSchema, AppData } from '@shared/schema';
 import { formatValue } from '@/lib/format';
 import { describeImportScope, isDataEmpty, ImportScopeCounts } from '@/lib/import-scope';
-import { Plus, Edit2, Trash2, Download, Upload, Users } from 'lucide-react';
+import { Plus, Edit2, Trash2, Download, Upload, Users, Lock } from 'lucide-react';
 
 // Shared with App.tsx's backup reminder check.
 export const LAST_EXPORT_STORAGE_KEY = 'chores-rewards-last-export';
@@ -38,6 +41,8 @@ export default function SettingsPage() {
   // currently in the database. Null when there's nothing pending, which
   // also doubles as the AlertDialog's open/closed state.
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const pinGate = usePinGuard();
 
   const { data: children, isLoading: childrenLoading } = useChildren();
   const { data: chores } = useChores();
@@ -280,7 +285,7 @@ export default function SettingsPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteChild(child.id, child.name)}
+                    onClick={() => pinGate.guard(() => handleDeleteChild(child.id, child.name))}
                     className="text-brand-coral/60 hover:text-brand-coral hover:bg-brand-coral/10"
                     aria-label={`Delete ${child.name}`}
                     data-testid={`button-delete-child-${child.id}`}
@@ -354,6 +359,29 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Parent PIN */}
+      <Card className="shadow-soft">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Lock className="w-5 h-5 text-brand-coral" />
+            <h2 className="text-xl font-semibold text-brand-grayDark">Parent PIN</h2>
+          </div>
+          <p className="text-brand-grayDark/60 text-sm mb-4">
+            {settings?.pinHash
+              ? 'A PIN currently guards paying out, editing or deleting a chore, deleting a child and importing a backup.'
+              : 'Set an optional 4-6 digit PIN to guard paying out, editing or deleting a chore, deleting a child and importing a backup. Adding and completing chores always stay open to kids.'}
+          </p>
+          <Button
+            onClick={() => setShowPinSetup(true)}
+            size="sm"
+            className="bg-brand-teal hover:bg-brand-teal/90 shadow-soft"
+            data-testid="button-manage-pin"
+          >
+            {settings?.pinHash ? 'Change or Remove PIN' : 'Set Parent PIN'}
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Data Management */}
       <Card className="shadow-soft">
         <CardContent className="p-6">
@@ -369,7 +397,7 @@ export default function SettingsPage() {
               {exportData.isPending ? 'Exporting...' : 'Export Backup'}
             </Button>
             <Button
-              onClick={handleImport}
+              onClick={() => pinGate.guard(handleImport)}
               disabled={importData.isPending}
               className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-yellow-dark shadow-soft"
               data-testid="button-import-data"
@@ -409,6 +437,9 @@ export default function SettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PinSetupDialog open={showPinSetup} onOpenChange={setShowPinSetup} />
+      <PinPromptDialog {...pinGate.pinPromptProps} />
     </div>
   );
 }
