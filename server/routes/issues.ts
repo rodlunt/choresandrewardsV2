@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { Octokit } from '@octokit/rest';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { bugReportSchema } from '../../shared/schema';
 
 const router = Router();
@@ -43,12 +43,30 @@ function detectImageType(buffer: Buffer): 'png' | 'jpeg' | 'webp' | null {
 // A handful of reports per IP per hour is enough for genuine use and cheap
 // to spam past, but keeps the endpoint from being used to mint unlimited
 // GitHub issues and screenshot uploads.
+//
+// Keying: Cloudflare overwrites CF-Connecting-IP on every proxied request
+// with the real visitor address, so through CF it is not attacker
+// controllable, and Caddy passes it through untouched. X-Forwarded-For is
+// useless here: Caddy has no trusted_proxies configured, so (since Caddy
+// 2.5) it strips the incoming XFF and forwards only its own peer, which is
+// the CF edge, and keying on req.ip would pool unrelated users per edge.
+// The req.ip fallback covers direct LAN access, where the CF header is
+// absent. Residual: a request that reaches the origin directly, bypassing
+// Cloudflare, can forge CF-Connecting-IP; the only thing keyed off it is
+// this limiter, so the exposure is limit evasion, nothing else.
 const createIssueLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many reports submitted. Please try again later.' },
+  keyGenerator: (req) => {
+    const cfIp = req.headers['cf-connecting-ip'];
+    if (typeof cfIp === 'string' && cfIp.length > 0) {
+      return ipKeyGenerator(cfIp);
+    }
+    return ipKeyGenerator(req.ip ?? '');
+  },
 });
 
 // POST /api/issues/create
