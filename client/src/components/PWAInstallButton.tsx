@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Smartphone, X } from 'lucide-react';
+import { Smartphone, X } from 'lucide-react';
+import {
+  subscribeInstallPrompt,
+  promptInstall,
+  type BeforeInstallPromptEvent,
+} from '@/lib/pwa-install';
 import {
   Dialog,
   DialogContent,
@@ -8,15 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
 
 const STORAGE_KEYS = {
   DISMISSED: 'pwa-install-dismissed',
@@ -70,30 +66,22 @@ export default function PWAInstallButton() {
       setIsInstallable(true);
     }
 
-    // Listen for the beforeinstallprompt event (Chrome, Edge, etc.)
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      const beforeInstallPromptEvent = e as BeforeInstallPromptEvent;
-      setDeferredPrompt(beforeInstallPromptEvent);
-      setIsInstallable(true);
-    };
+    // The beforeinstallprompt event is captured at module scope in
+    // lib/pwa-install.ts (armed before React renders); subscribing replays
+    // whatever was captured before this component mounted, which is the
+    // whole fix for the button never appearing: the event usually fires
+    // long before the dashboard exists.
+    const unsubscribe = subscribeInstallPrompt((event) => {
+      setDeferredPrompt(event);
+      if (event) {
+        setIsInstallable(true);
+      } else {
+        // Cleared by lib on appinstalled or after prompting.
+        setIsInstallable(isIOSDevice);
+      }
+    });
 
-    // Listen for successful installation
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setIsInstallable(false);
-      setDeferredPrompt(null);
-      localStorage.removeItem(STORAGE_KEYS.DISMISSED);
-      localStorage.removeItem(STORAGE_KEYS.REMIND_LATER);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
+    return unsubscribe;
   }, []);
 
   const handleInstallClick = async () => {
@@ -107,22 +95,11 @@ export default function PWAInstallButton() {
     if (!deferredPrompt) return;
 
     try {
-      // Show the install prompt
-      await deferredPrompt.prompt();
-
-      // Wait for the user's response
-      const choiceResult = await deferredPrompt.userChoice;
-
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+      const outcome = await promptInstall();
+      if (outcome === 'accepted') {
         localStorage.setItem(STORAGE_KEYS.LAST_SHOWN, new Date().toISOString());
-      } else {
-        console.log('User dismissed the install prompt');
+        setIsInstalled(true);
       }
-
-      // Clear the prompt
-      setDeferredPrompt(null);
-      setIsInstallable(false);
     } catch (error) {
       console.error('Error during installation:', error);
     }
