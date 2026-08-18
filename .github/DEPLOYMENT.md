@@ -9,11 +9,14 @@ Caddy fronts the container and Cloudflare sits in front of Caddy, serving the ap
 
 ## CI
 
-`.github/workflows/validate-and-deploy.yml` runs on every push to `main`:
+`.github/workflows/validate-and-deploy.yml` runs on every push to `main` and on pull
+requests (gates only):
 
-1. **validate**: `pnpm install --frozen-lockfile`, `pnpm audit --audit-level=high`,
-   `pnpm run check` (tsc), `pnpm run build`.
-2. **deploy**: SSHes to the server and runs `docker-compose build && docker-compose up -d`.
+1. **Security audit** (own job): `pnpm audit --audit-level=high`.
+2. **validate**: `pnpm install --frozen-lockfile`, `pnpm run check` (tsc), `pnpm run build`.
+3. **deploy** (push to main only, `production` environment): SSHes to the server and runs
+   `docker-compose build && docker-compose up -d`. Both gate jobs are required status checks
+   on `main`.
 
 The deploy job runs on a GitHub-hosted runner, which cannot reach a tailnet-only host. It
 currently fails at the SSH step on every run. Issue #29 tracks moving this to a self-hosted
