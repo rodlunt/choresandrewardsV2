@@ -26,9 +26,12 @@ repos.
 - Alert delivery itself failing is loud: logged and non-zero exit, with the
   unit's `OnFailure=ntfy-fail@%n.service` as the backup alarm.
 
-**Stated gap:** nothing watches the timer itself. If it quietly stops, the
-symptom is merged PRs never reaching candr.lunt.au, with no alert. A Kuma push
-heartbeat on `last-success`/timer activity can close this later.
+**Watch-the-watcher:** every controlled exit pings an Uptime Kuma push
+monitor ("candr-deploy heartbeat (dead-man switch)", 15 minute window) via
+`KUMA_PUSH_URL` in `/etc/candr-deploy.env`. If the timer stops, the script
+wedges, or the unit crashes, the heartbeat goes silent and Kuma alerts. The
+push URL stays on the server, not in this repository (the token fakes
+liveness if leaked).
 
 ## Install (once, as root on the server)
 

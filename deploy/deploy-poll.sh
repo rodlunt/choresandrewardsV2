@@ -17,10 +17,12 @@
 # the checkout sits at the target sha AND the container reports healthy
 # AND the public URL answers; "the script finished" proves nothing.
 #
-# Stated gap (hardening rule 8): nothing watches this timer itself. If the
-# timer quietly stops, deploys stop landing and nothing alerts; the
-# symptom is merged PRs never reaching candr.lunt.au. A Kuma push
-# heartbeat can close this later.
+# Watch-the-watcher: every controlled exit (up to date, hold, success)
+# pings the Uptime Kuma push monitor named by KUMA_PUSH_URL, so the timer
+# dying, the script wedging, or the unit crashing all read as a missed
+# heartbeat and Kuma raises the alarm. Failure paths still ping: their
+# alerting is the script's own ntfy calls, and the heartbeat only claims
+# "the timer is running me".
 
 set -euo pipefail
 
@@ -42,6 +44,13 @@ RENAG_SECS=3600        # re-alert for a persisting fault hourly at most
 mkdir -p "$STATE_DIR"
 
 log() { echo "candr-deploy: $*"; }
+
+# Best-effort by design: the heartbeat's own delivery failure needs no
+# handling here, because Kuma treats a missed beat as the alarm condition,
+# so a broken push path IS the alert (fires on Kuma's side).
+kuma_heartbeat() {
+  [ -n "${KUMA_PUSH_URL:-}" ] && curl -s --max-time 10 -o /dev/null "$KUMA_PUSH_URL?status=up&msg=$1" || true
+}
 
 # The one loud-failure primitive (hardening rule 11). Sends the house ntfy
 # shape; if the alert itself cannot be delivered, that failure is printed
@@ -91,8 +100,9 @@ as_repo_user fetch -q origin main
 REMOTE=$(as_repo_user rev-parse origin/main)
 
 if [ "$LOCAL" = "$REMOTE" ]; then
-  # Up to date: the quiet common case. Nothing observable happens here by
-  # design; see the stated gap in the header.
+  # Up to date: the quiet common case. The heartbeat is the one observable
+  # side effect, proving the timer is alive between deploys.
+  kuma_heartbeat "up-to-date"
   exit 0
 fi
 
@@ -114,6 +124,7 @@ hold() {
       "candr deploy held" \
       "Commit ${REMOTE:0:12} has been undeployable for $((WAITED / 60)) min: $reason. Deploys are stopped until it resolves. Check https://github.com/rodlunt/choresandrewardsV2/actions"
   fi
+  kuma_heartbeat "holding"
   exit 0
 }
 
@@ -143,6 +154,7 @@ for name in "${REQUIRED_CHECKS[@]}"; do
         "candr main is red" \
         "Required check '$name' concluded '$conclusion' on ${REMOTE:0:12}. Deploys are stopped. https://github.com/rodlunt/choresandrewardsV2/actions"
       log "holding deploy of $REMOTE: check '$name' concluded $conclusion"
+      kuma_heartbeat "main-red"
       exit 0
       ;;
   esac
@@ -182,4 +194,5 @@ fi
 
 date +%s > "$STATE_DIR/last-success"
 rm -f "$PENDING_FILE" "$STATE_DIR/alerted-hold-$REMOTE" "$STATE_DIR/alerted-red-$REMOTE"
+kuma_heartbeat "deployed"
 log "deployed $REMOTE: container healthy, $LIVE_URL answering"
