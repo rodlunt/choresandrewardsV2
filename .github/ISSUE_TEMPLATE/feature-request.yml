@@ -1,28 +1,40 @@
 name: Feature request
-description: Something the app should do
-labels: [enhancement]
+description: Suggest something the app doesn't do yet.
+labels: ["enhancement"]
 body:
   - type: textarea
-    id: need
+    id: problem
     attributes:
-      label: The need
-      description: Who needs this and what job it does for them, not the implementation.
+      label: What problem does this solve
+      description: What are you trying to do that the app currently doesn't support?
     validations:
       required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you'd like to see, in as much or as little detail as you have.
+    validations:
+      required: true
+
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: >-
-        Two or three testable statements that define done. Done means these pass,
-        not "finished typing". Epics get split into smaller issues before work starts.
+      description: >
+        Two or three testable statements that would mean this is done. "Finished typing"
+        doesn't count; the criteria have to actually pass.
       placeholder: |
-        - [ ] ...
-        - [ ] ...
+        - [ ] A child can be marked inactive without deleting their chore/payout history
+        - [ ] Inactive children no longer appear in the chore-ticking view
     validations:
       required: true
+
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: The boring alternative, and why it does not suffice (if it does, say so).
+      description: Any other way you could achieve this, and why you'd prefer the proposal above.
+    validations:
+      required: false
