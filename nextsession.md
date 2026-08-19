@@ -30,10 +30,11 @@ this baton is the only change.
 
 ## Open follow-ups (none are issues)
 
-1. Rodney to remove and re-add the phone home-screen shortcut to pick up the new
-   PWA icon and name (Android caches both at add time).
-2. Dependabot cadence (weekly, grouped minors) may deserve retuning if PR volume
+1. Dependabot cadence (weekly, grouped minors) may deserve retuning if PR volume
    annoys.
+
+The home-screen shortcut follow-up is DONE: Rodney re-added it on 19/08 and
+confirmed the new PWA icon and "Chores and Rewards" name display correctly.
 
 The watch-the-watcher gap on `candr-deploy.timer` is CLOSED, not open as an earlier
 version of this baton said: Uptime Kuma monitor 21 ("candr-deploy heartbeat
