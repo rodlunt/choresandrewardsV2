@@ -30,14 +30,17 @@ this baton is the only change.
 
 ## Open follow-ups (none are issues)
 
-1. Watch-the-watcher gap on `candr-deploy.timer` on opti: a Kuma push heartbeat
-   would close it. Highest-value remaining item.
-2. Rodney to remove and re-add the phone home-screen shortcut to pick up the new
+1. Rodney to remove and re-add the phone home-screen shortcut to pick up the new
    PWA icon and name (Android caches both at add time).
-3. Dependabot cadence (weekly, grouped minors) may deserve retuning if PR volume
+2. Dependabot cadence (weekly, grouped minors) may deserve retuning if PR volume
    annoys.
+
+The watch-the-watcher gap on `candr-deploy.timer` is CLOSED, not open as an earlier
+version of this baton said: Uptime Kuma monitor 21 ("candr-deploy heartbeat
+(dead-man switch)", push, 900s window) is active and receiving a ping from
+`deploy-poll.sh` every ~5 minutes (VERIFIED 19/08 against kuma.db, read-only).
 
 ## Suggested starting point
 
-Nothing urgent. If picking work, the Kuma heartbeat for `candr-deploy.timer` is the
-one remaining stated gap; otherwise the three low-priority TODO.md items.
+Nothing urgent. If picking work, the three low-priority TODO.md items are all
+that remains.
