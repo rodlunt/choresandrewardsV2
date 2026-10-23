@@ -1,4 +1,12 @@
 overrides:
+  # 2026-10-24 sweep: transitive pins that a plain update cannot reach.
+  # proxy-addr: IP spoofing via IPv4-mapped IPv6 trust subnet (critical), via express.
+  proxy-addr: ">=2.0.8"
+  # source-map-js: event-loop DoS (high), via tailwindcss>postcss.
+  source-map-js: ">=1.2.2"
+  # ip-address and qs: moderate advisories via express-rate-limit and body-parser.
+  ip-address: ">=10.7.4"
+  qs: ">=6.16.0"
   # 2026-07-05 sweep: esbuild-kit (deprecated, inside drizzle-kit) pins esbuild ~0.18.
   "esbuild@<=0.24.2": ^0.25.0
 
